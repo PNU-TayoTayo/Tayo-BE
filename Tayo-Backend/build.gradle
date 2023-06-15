@@ -32,6 +32,9 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
+	// swagger ui
+	implementation 'org.springdoc:springdoc-openapi-ui:1.6.15'
+
 	// requirements of hyperledger indy
 	implementation("net.java.dev.jna:jna:5.12.1")
 	implementation("org.apache.commons:commons-lang3:3.12.0")

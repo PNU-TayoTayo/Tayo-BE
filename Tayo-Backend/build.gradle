@@ -1,0 +1,45 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '2.7.12'
+	id 'io.spring.dependency-management' version '1.0.15.RELEASE'
+}
+
+group = 'pnu.cse.TayoTayo'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	sourceCompatibility = '11'
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+	maven {
+		url = uri("https://repo.sovrin.org/repository/maven-public")
+	}
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	compileOnly 'org.projectlombok:lombok'
+	runtimeOnly 'com.mysql:mysql-connector-j'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+	// requirements of hyperledger indy
+	implementation("net.java.dev.jna:jna:5.12.1")
+	implementation("org.apache.commons:commons-lang3:3.12.0")
+	implementation("commons-io:commons-io:2.11.0")
+	implementation("org.json:json:20230227")
+	implementation("org.hyperledger:indy:1.15.0")
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

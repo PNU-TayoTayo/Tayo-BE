@@ -29,13 +29,11 @@ public class indytest {
 
     public static void setUp() throws Exception {
 
-        System.out.println("\n\n\n");
-        System.out.println("STEP 1 - Connect to Pool");
+
+        System.out.println("\n\n\nSTEP 1 - Connect to Pool");
         Pool pool = createAndOpenPoolLedger();
 
-        ////////////////////////////////////////
         System.out.println("\n\n\nSTEP 2 - Configuring steward");
-        // Steward 정보 설정
         Map<String, Object> steward = new HashMap<>();
         steward.put("name", "Sovrin Steward");
         steward.put("wallet_config", new JSONObject().put("id", "souvrin_steward_wallet").toString());
@@ -58,49 +56,21 @@ public class indytest {
                 System.out.println("steward DID: " + steward.get("did"));
                 System.out.println("steward Key: " + steward.get("key"));
 
-//                DidResults.CreateAndStoreMyDidResult stewardDidForGovernment = Did.createAndStoreMyDid(stewardWallet, "{}").get();
-//                steward.put("did_for_government",stewardDidForGovernment.getDid());
-//                steward.put("key_for_government",stewardDidForGovernment.getVerkey());
-//
-//                System.out.println("steward DID for government : " + steward.get("did_for_government"));
-//                System.out.println("steward Key for government : " + steward.get("key_for_government"));
-//
-//                // TODO : role(TRUST_ANCHOR)이 애매하네
-//                String nymRequest = Ledger.buildNymRequest(steward.get("did").toString(), steward.get("did_for_government").toString(),
-//                        steward.get("key_for_government").toString(), null, "TRUST_ANCHOR").get();
-//                String didForGovernmentRes = Ledger.signAndSubmitRequest(pool, stewardWallet, steward.get("did").toString(), nymRequest).get();
-//                System.out.println(didForGovernmentRes);
-                /*
-                nym_request = await ledger.build_nym_request(steward['did'], steward['did_for_government'], steward['key_for_faber'], None, role)
-                await ledger.sign_and_submit_request(steward['pool'], steward['wallet'], steward['did'], nym_request)
-
-                 */
-
-//                // Store Trustee DID in the Ledger
-//                String nymRequest = Ledger.buildNymRequest(steward.get("did").toString(), steward.get("did").toString(),
-//                        steward.get("key").toString(), null, ROLE_STEWARD).get();
-////                String did = Ledger.signAndSubmitRequest(pool, stewardWallet, steward.get("did").toString(), nymRequest).get();
-//                String res = signAndSubmitRequest(pool, stewardWallet, steward.get("did").toString(), nymRequest);
-//                System.out.println(res);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         }
 
-        System.out.println(Did.getListMyDidsWithMeta(stewardWallet).get());
 
 
         System.out.println("\n\n\n");
         System.out.println("STEP 3 - register DID for government");
-
 
         // Government 정보 설정
         Map<String, Object> government = new HashMap<>();
         government.put("name", "theGovernment");
         government.put("wallet_config", new JSONObject().put("id", "government_wallet").toString());
         government.put("wallet_credentials", new JSONObject().put("key", "government_wallet_key"));
-        government.put("pool", pool);
-        government.put("role", "{}");
 
         Wallet.createWallet(government.get("wallet_config").toString(), government.get("wallet_credentials").toString()).get();
         Wallet governmentWallet = Wallet.openWallet(government.get("wallet_config").toString(), government.get("wallet_credentials").toString()).get();
@@ -118,12 +88,8 @@ public class indytest {
                 // steward의 did를 사용하여 government의 did를 등록하고, 해당 did를 TRUST_ANCHOR 역할로 설정하는 작업을 수행
                 String nymRequest = Ledger.buildNymRequest(steward.get("did").toString(), government.get("did").toString(), government.get("key").toString(),
                         null, "TRUST_ANCHOR").get();
-                //String res = Ledger.signAndSubmitRequest(pool, stewardWallet, steward.get("did").toString(), nymRequest).get();
-                //System.out.println("결과 : " + res);
-
                 String res = signAndSubmitRequest(pool, stewardWallet, steward.get("did").toString(), nymRequest);
                 System.out.println(res);
-
 
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -132,26 +98,14 @@ public class indytest {
 
         System.out.println(Did.getListMyDidsWithMeta(governmentWallet).get());
 
-//        closeAndDeleteWallet(stewardWallet, steward.get("wallet_config").toString(), steward.get("wallet_credentials").toString());
-//        closeAndDeleteWallet(governmentWallet, government.get("wallet_config").toString(), government.get("wallet_credentials").toString());
-//
-//
-//        pool.closePoolLedger().get();
-//        Pool.deletePoolLedgerConfig("pool1").get();
 
-
-
-        System.out.println("\n\n\n");
-        System.out.println("STEP 3 - register DID for University");
+        System.out.println("\n\n\nSTEP 3 - register DID for University");
 
         // University 정보 설정
         Map<String, Object> university = new HashMap<>();
         university.put("name", "University");
         university.put("wallet_config", new JSONObject().put("id", "theUniversity_wallet").toString());
         university.put("wallet_credentials", new JSONObject().put("key", "theUniversity_wallet_key").toString());
-        university.put("pool", pool);
-        university.put("role", null);
-
 
         Wallet.createWallet(university.get("wallet_config").toString(), university.get("wallet_credentials").toString()).get();
         Wallet universityWallet = Wallet.openWallet(university.get("wallet_config").toString(), university.get("wallet_credentials").toString()).get();
@@ -166,10 +120,8 @@ public class indytest {
                 System.out.println("university DID: " + university.get("did"));
                 System.out.println("university Key: " + university.get("key"));
 
-
                 String nymRequest = Ledger.buildNymRequest(steward.get("did").toString(), university.get("did").toString(), university.get("key").toString(),
                         null, "TRUST_ANCHOR").get();
-                //String res = Ledger.signAndSubmitRequest(pool, stewardWallet, steward.get("did").toString(), nymRequest).get();
                 String res = signAndSubmitRequest(pool, stewardWallet, steward.get("did").toString(), nymRequest);
                 System.out.println(res);
 
@@ -189,8 +141,6 @@ public class indytest {
         company.put("name", "company");
         company.put("wallet_config", new JSONObject().put("id", "theCompany_wallet").toString());
         company.put("wallet_credentials", new JSONObject().put("key", "theCompany_wallet_key").toString());
-        company.put("pool", pool);
-        company.put("role", "ENDORSER");
 
         Wallet.createWallet(company.get("wallet_config").toString(), company.get("wallet_credentials").toString()).get();
         Wallet companyWallet = Wallet.openWallet(company.get("wallet_config").toString(), company.get("wallet_credentials").toString()).get();
@@ -206,7 +156,6 @@ public class indytest {
 
                 String nymRequest = Ledger.buildNymRequest(steward.get("did").toString(), company.get("did").toString(), company.get("key").toString(),
                         null, "TRUST_ANCHOR").get();
-                //String res = Ledger.signAndSubmitRequest(pool, stewardWallet, steward.get("did").toString(), nymRequest).get();
                 String res = signAndSubmitRequest(pool, stewardWallet, steward.get("did").toString(), nymRequest);
                 System.out.println(res);
 
@@ -219,24 +168,23 @@ public class indytest {
 
 
         /*
-           STEP 4 : 해당 코드는 정부가 credential schema를 생성하고, 해당 schema를 ledger에 전송하는 과정
-
+           STEP 4 : 해당 코드는 정부가 credential schema(VC의 양식??)를 생성하고, 해당 schema를 ledger에 전송해서 등록!!
            스키마의 이름은 Transcript, 버전은 1.2 , 포함될 속성은 first_name, last_name 등등등... (나중에 우리가 정의해야할 부분)
          */
 
-        System.out.println("\n\n\n");
-        System.out.println("STEP 4 - Government creates credential schema");
+        System.out.println("\n\n\nSTEP 4 - Government creates credential schema");
 
-        System.out.println("\"Government\" -> Create Transcript Schema");
+        System.out.println("\n1. Government가 Transcript Schema를 생성");
 
+        // 차대번호나 차량번호를 받아서
+        // 차종류, 차량 번호, 출고일자, 운행 기록, 정기검사 유무, 검사이력? 정비이력?, 주행거리, 의무 보험 가입정보?? 사고정보?
         Map<String, Object> transcript = new HashMap<>();
-        transcript.put("name", "Transcript");
+        transcript.put("name", "TayoTayo Service Car Transcript");
         transcript.put("version", "1.2");
         transcript.put("attributes", new JSONArray(
-                Arrays.asList("first_name", "last_name",
-                        "degree", "status", "year", "average", "ssn")).toString());
+                Arrays.asList("first_name","last_name","degree", "status", "year", "average", "ssn")).toString());
 
-        // issuerCreateSchema 함수를 사용하여 스키마를 생성
+        // government의 did로 issuerCreateSchema 메소드로 스키마 생성!
         AnoncredsResults.IssuerCreateSchemaResult schemaResult = Anoncreds.issuerCreateSchema(
                 government.get("did").toString(),
                 transcript.get("name").toString(),
@@ -244,86 +192,63 @@ public class indytest {
                 transcript.get("attributes").toString()
         ).get();
 
-        // 생성된 스키마 ID랑 Json을 government Map에 저장
         government.put("transcript_schema_id", schemaResult.getSchemaId());
         government.put("transcript_schema", schemaResult.getSchemaJson());
-
         String transcript_schema_id =government.get("transcript_schema_id").toString();
 
-        System.out.println("\"Government\" -> Send \"Transcript\" Schema to Ledger");
+        System.out.println("\n2. Government가 Transcript Schema를 레저에 등록 ");
         System.out.println("정부가 정의해둔 Schema : " + government.get("transcript_schema").toString());
 
-
-        //Ledger.buildSchemaRequest 함수를 사용하여 위에서 만든 스키마를 ledger에 전송하기 위한 요청을 생성
+        //Ledger.buildSchemaRequest 함수를 사용하여 위에서 생성한 스키마를 ledger에 등록하기 위한 Schema Request 생성
         String schemaRequest = Ledger.buildSchemaRequest(government.get("did").toString(), government.get("transcript_schema").toString()).get();
         System.out.println(schemaRequest);
 
         // Ledger.signAndSubmitRequest 함수를 사용하여 스키마 등록요청을 서명하고 ledger에 제출
-        //String res = signAndSubmitRequest(pool, stewardWallet, steward.get("did").toString(), nymRequest);
         //String res = signAndSubmitRequest(pool,governmentWallet,government.get("did").toString(),schemaRequest);
-        String res = Ledger.signAndSubmitRequest((Pool) government.get("pool"), governmentWallet, government.get("did").toString(),
-                schemaRequest).get();
+        String res = Ledger.signAndSubmitRequest(pool, governmentWallet, government.get("did").toString(),schemaRequest).get();
         System.out.println(res);
 
 
         // STEP - 5 : University will create a credential definition
-        System.out.println("\n\n\n");
-        System.out.println("STEP5 - University creates Transcript Credential Definition");
+        System.out.println("\n\n\nSTEP5 - University creates Transcript Credential Definition");
 
-        System.out.println("\"theUniversity\" -> Get \"Transcript\" Schema from Ledger");
+        System.out.println("\ntheUniversity(Issuer)가 레저에 등록되어 있는 Schema를 가지고 옴 (schemaId로) ");
 
-        // GET SCHEMA FROM LEDGER (앞에서 정부가 정의해둔 Schema를 레저로 부터 가져옴)
+        // 아마도 이게 SchemaID를 가지고 오는 사이클 인듯?
         String getSchemaRequest = Ledger.buildGetSchemaRequest(university.get("did").toString(), transcript_schema_id).get();
-        System.out.println("어디가 에러 ..?");
-        System.out.println(getSchemaRequest);
-
-        // TODO : 이 부분이 다르긴 함
-        String getSchemaResponse = ensurePreviousRequestApplied((Pool) university.get("pool"), getSchemaRequest, response -> {
+        String getSchemaResponse = ensurePreviousRequestApplied(pool, getSchemaRequest, response -> {
             JSONObject getSchemaResponseObject = new JSONObject(response);
             return !getSchemaResponseObject.getJSONObject("result").isNull("seqNo");
         });
-
         System.out.println(getSchemaResponse);
-
         LedgerResults.ParseResponseResult parseSchemaResult = Ledger.parseGetSchemaResponse(getSchemaResponse).get();
-
-
         university.put("transcript_schema_id", parseSchemaResult.getId());
         university.put("transcript_schema",parseSchemaResult.getObjectJson());
 
-        System.out.println(parseSchemaResult.getObjectJson());
+        System.out.println("\n이게 Schema랑 똑같나??? "+parseSchemaResult.getObjectJson());
 
-
-        // TRANSCRIPT CREDENTIAL DEFINITION
-        // 여기서 정의한건 university가 지갑에 가지고 있는건가?? 어디에 들어가는거지
-        System.out.println("\"theUniversity\" -> Create and store in Wallet \"theUniversity Transcript\" Credential Definition");
-
+        // Credential Definition 생성 요청
+        System.out.println("\ntheUniversity가 지갑안에 Schema에 대한 Credential Definition를 만든다");
         AnoncredsResults.IssuerCreateAndStoreCredentialDefResult createCredDefResult = Anoncreds.issuerCreateAndStoreCredentialDef(
                 universityWallet, university.get("did").toString(), university.get("transcript_schema").toString(), "TAG1", null, new JSONObject().put("support_revocation", false).toString()).get();
-
         university.put("transcript_cred_def_id",createCredDefResult.getCredDefId());
         university.put("transcript_cred_def",createCredDefResult.getCredDefJson());
 
-        System.out.println("\"theUniversity\" -> Send  \"theUniversity Transcript\" Credential Definition to Ledger");
-
+        // Request만들어서 서명하고 제출해서 등록!!
+        System.out.println("\ntheUniversity가 생성한 Credential Definition을 레저에 등록한다 ");
         String credDefRequest = Ledger.buildCredDefRequest(university.get("did").toString(),university.get("transcript_cred_def").toString()).get();
         Ledger.signAndSubmitRequest(pool, universityWallet, university.get("did").toString(), credDefRequest);
 
-        System.out.println(">>>>>>>>>>"+university.get("transcript_cred_def_id"));
-        System.out.println(university.get("transcript_cred_def"));
+        System.out.println("등록된 Credential Definition ID : "+university.get("transcript_cred_def_id"));
+        System.out.println("등록된 Credential Definition Json : "+university.get("transcript_cred_def"));
 
 
         // STEP6 - University Issues Transcript Credential to Alice - 엘리스에게 VC 발급
-        System.out.println("\n\n\n");
-        System.out.println("STEP6 - University Issues Transcript Credential to Alice");
-        System.out.println("===================================================");
-        System.out.println("Getting Transcript with theUniversity ");
-        System.out.println("===================================================");
+        System.out.println("\n\n\nSTEP6 - University Issues Transcript Credential to Alice");
 
         /*
             우선 엘리스 setup(지갑생성등) 부터 하자
             우린 setup과정이 회원가입일 것임
-
          */
 
         // Alice 정보 설정
@@ -331,14 +256,12 @@ public class indytest {
         Alice.put("name", "Alice");
         Alice.put("wallet_config", new JSONObject().put("id", "alice_wallet").toString());
         Alice.put("wallet_credentials", new JSONObject().put("key", "alice_wallet_key").toString());
-        Alice.put("pool", pool);
 
         Wallet.createWallet(Alice.get("wallet_config").toString(), Alice.get("wallet_credentials").toString()).get();
         Wallet AliceWallet = Wallet.openWallet(Alice.get("wallet_config").toString(), Alice.get("wallet_credentials").toString()).get();
 
         if(AliceWallet != null){
             try {
-
                 DidResults.CreateAndStoreMyDidResult didResult = Did.createAndStoreMyDid(AliceWallet, "{}").get();
                 Alice.put("did",didResult.getDid());
                 Alice.put("key",didResult.getVerkey());
@@ -347,12 +270,11 @@ public class indytest {
                 System.out.println("Alice Key: " + Alice.get("key"));
 
 
-                // TODO : 여기 에러
-                String nymRequest = Ledger.buildNymRequest(government.get("did").toString(), Alice.get("did").toString(), Alice.get("key").toString(), null, "ENDORSER").get();
-                String resd = Ledger.signAndSubmitRequest(pool, governmentWallet, government.get("did").toString(), nymRequest).get();
-//                System.out.println("결과 : " + resd);
-//                String ress = signAndSubmitRequest(pool, governmentWallet, government.get("did").toString(), nymRequest);
-//                System.out.println(ress);
+                // TODO : 근데 왜 정부의 did로 하는거지?
+//                String nymRequest = Ledger.buildNymRequest(government.get("did").toString(), Alice.get("did").toString(), Alice.get("key").toString(),
+//                        null, "ENDORSER").get();
+//                String resd = Ledger.signAndSubmitRequest(pool, governmentWallet, government.get("did").toString(), nymRequest).get();
+//                System.out.println(resd);
 
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -362,55 +284,43 @@ public class indytest {
         System.out.println(Did.getListMyDidsWithMeta(AliceWallet).get());
 
 
-        // University creates transcript credential offer
-        System.out.println("University creates and sends transcript credential offer to Alice");
-        System.out.println(" 대학교가 alice에게 transcript credential(이게 VC 인가..?)를 보냄");
-
-        String transcriptCredOffer = Anoncreds.issuerCreateCredentialOffer(
-                universityWallet, university.get("transcript_cred_def_id").toString()).get();
-
+        System.out.println("\n Issuer가 definition에 대한 credential offer를 생성한다");
+        String transcriptCredOffer = Anoncreds.issuerCreateCredentialOffer(universityWallet, university.get("transcript_cred_def_id").toString()).get();
         university.put("transcript_cred_offer",transcriptCredOffer);
 
-        System.out.println("\n\"theUniversity\" -> Send \"Transcript\" Credential Offer to Alice");
+        // offer와 관련된 내용은 이미 웹에서 제공하고 있을 듯..?
+        System.out.println("\n theUniversity가 생성한 Credential Offer를 엘리스에게 보낸다");
         Alice.put("transcript_cred_offer",transcriptCredOffer);
 
-        //
-        System.out.println("Alice prepares a transcript credential request");
+        System.out.println("\n 엘리스는 받은 Credential offer로 부터 schemaID랑 credential definition ID를 획득");
+        Alice.put("transcript_schema_id",new JSONObject(transcriptCredOffer).getString("schema_id"));
+        Alice.put("transcript_cred_def_id",new JSONObject(transcriptCredOffer).getString("cred_def_id"));
 
-        String transcriptCredDefId = new JSONObject(transcriptCredOffer).getString("cred_def_id");
-        String transcriptSchemaId = new JSONObject(transcriptCredOffer).getString("schema_id");
-
-        Alice.put("transcript_schema_id",transcriptSchemaId);
-        Alice.put("transcript_cred_def_id",transcriptCredDefId);
-
-
-        System.out.println("\n\"Alice\" -> Create and store \"Alice\" Master Secret in Wallet");
+        System.out.println("\n엘리스는 VC 생성에 필요한 Master Secret을 생성하고 엘리스 지갑에 저장한다");
         String AliceMasterSecretId = Anoncreds.proverCreateMasterSecret(AliceWallet, null).get();
         Alice.put("master_secret_id",AliceMasterSecretId);
 
-
-        System.out.println("\n\"Alice\" -> Get \"theUniversity Transcript\" Credential Definition from Ledger");
+        System.out.println("\n 엘리스는 알고 있는 credential definition ID로 레저로부터 Credential Definition를 가져온다");
         LedgerResults.ParseResponseResult parsedCredDefResponse = getCredDef(pool, Alice.get("did").toString(), Alice.get("transcript_cred_def_id").toString());
-
-        Alice.put("theUniversity_transcript_cred_def_id",parsedCredDefResponse.getId());
         Alice.put("theUniversity_transcript_cred_def",parsedCredDefResponse.getObjectJson());
 
 
-        System.out.println("\n\"Alice\" -> Create \"Transcript\" Credential Request for theUniversity");
+        // 여기서 Credential request 매개변수로 AliceWallet, AliceDID, Credential Offer, Credential Definition, Master Secret ID
+        System.out.println("\n엘리스는 VC생성을 위해 Issuer에게 보낼 transcript credential request를 준비한다");
         AnoncredsResults.ProverCreateCredentialRequestResult credentialRequestResult =
                 Anoncreds.proverCreateCredentialReq(AliceWallet, Alice.get("did").toString(), Alice.get("transcript_cred_offer").toString(),
                         Alice.get("theUniversity_transcript_cred_def").toString(), Alice.get("master_secret_id").toString()).get();
         Alice.put("transcript_cred_request",credentialRequestResult.getCredentialRequestJson());
         Alice.put("transcript_cred_request_metadata",credentialRequestResult.getCredentialRequestMetadataJson());
 
-
-        System.out.println("\n\"Alice\" -> Send \"Transcript\" Credential Request to theUniversity");
+        System.out.println("\n엘리스가 Issuer에게 Credential Request를 제출");
         university.put("transcript_cred_request",Alice.get("transcript_cred_request"));
 
         // 대학교에서 엘리스에게 credential을 발급해준다 (대학교가 알고 있는 엘리스의 개인정보들) - 즉, 이게 VC 인거지
-        // TODO : 여기서 encoded는 뭘까?
-        System.out.println("\nUniversity issues credential to alice");
-        System.out.println("\"theUniversity\" -> Create \"Transcript\" Credential for Alice");
+        System.out.println("\n이제 대학교가 엘리스를 위한 Credential을 생성한다"); // 이건 아마도 Issuer의 DB를 하나 파야할듯?
+
+        // TODO : 여기서 encoded는 무슨 값이 들어가야하지..?
+        //      암호화 한 값인가..?
         JSONObject credValuesJson = new JSONObject()
                 .put("first_name", new JSONObject().put("raw", "Alice").put("encoded", "1139481716457488690172217916278103335"))
                 .put("last_name", new JSONObject().put("raw", "Garcia").put("encoded", "5321642780241790123587902456789123452"))
@@ -422,42 +332,219 @@ public class indytest {
 
         university.put("alice_transcript_cred_values",credValuesJson);
 
+        // 대학교가 CredentialResult를 생성한다 (IssuerWallet, cred_offer, cred_request, credValuesJson, ...)
         AnoncredsResults.IssuerCreateCredentialResult issuerCredentialResult =
                 Anoncreds.issuerCreateCredential(universityWallet, university.get("transcript_cred_offer").toString(),university.get("transcript_cred_request").toString(),
                         university.get("alice_transcript_cred_values").toString(),null,0).get();
 
-        String transcriptCredJson = issuerCredentialResult.getCredentialJson();
-        university.put("transcript_cred",transcriptCredJson);
+        // 이게 생성한 VC임
+        university.put("transcript_cred",issuerCredentialResult.getCredentialJson());
+        System.out.println("\n 생성한 VC : " + university.get("transcript_cred"));
 
-
-        System.out.println("\"theUniversity\" -> Send \"Transcript\" Credential to Alice");
-        System.out.println(transcriptCredJson);
-
+        System.out.println("\ntheUniversity가 엘리스에게 생성한 VC를 보낸다");
         Alice.put("transcript_cred",university.get("transcript_cred"));
-        System.out.println("\"Alice\" -> Store \"Transcript\" Credential from theUniversity");
 
-        // TODO : ??
-        String alice_trans_cred_def = getCredDef(pool, Alice.get("did").toString(), Alice.get("transcript_cred_def_id").toString()).getObjectJson();
-        Alice.put("transcript_cred_def",alice_trans_cred_def);
-
-        String transcriptCredentialId = Anoncreds.proverStoreCredential(AliceWallet, null, Alice.get("transcript_cred_request_metadata").toString()
-                , Alice.get("transcript_cred").toString(), Alice.get("transcript_cred_def").toString(), null).get();
-
-        System.out.println("\\n\\n>>>>>>>>>>>>>>>>>>>>>>.\\n\\n" + Alice.get("transcript_cred_def"));
+        // 생성한 VC를 엘리스 지갑에 저장
+        System.out.println("\n엘리스가 받은 VC를 저장");
+        Anoncreds.proverStoreCredential(AliceWallet, null, Alice.get("transcript_cred_request_metadata").toString()
+                , Alice.get("transcript_cred").toString(), Alice.get("theUniversity_transcript_cred_def").toString(), null);
 
 
-        // VP(Verifiable Presentation) 생성
-        // STEP7 - Alice makes verifiable presentation(VP) to Company
+        // ==================================================================================================================
+
+        // TODO : 여기 유저(Bob) 한명 더 만들어 보자!!!!!!!!!!!!
+        //       Alice가 VP를 만드는 과정에서 Bob의 VC를 VP로 만들떄 잡아 낼 수 있는가?
+
+        // Alice 정보 설정
+        Map<String, Object> Bob = new HashMap<>();
+        Bob.put("name", "Bob");
+        Bob.put("wallet_config", new JSONObject().put("id", "Bob_wallet").toString());
+        Bob.put("wallet_credentials", new JSONObject().put("key", "Bob_wallet_key").toString());
+
+        Wallet.createWallet(Bob.get("wallet_config").toString(), Bob.get("wallet_credentials").toString()).get();
+        Wallet BobWallet = Wallet.openWallet(Bob.get("wallet_config").toString(), Bob.get("wallet_credentials").toString()).get();
+
+        if(BobWallet != null){
+            try {
+                DidResults.CreateAndStoreMyDidResult didResult = Did.createAndStoreMyDid(BobWallet, "{}").get();
+                Bob.put("did",didResult.getDid());
+                Bob.put("key",didResult.getVerkey());
+
+                System.out.println("Bob DID: " + Bob.get("did"));
+                System.out.println("Bob Key: " + Bob.get("key"));
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        System.out.println("\n Issuer가 definition에 대한 credential offer를 생성한다");
+        String transcriptCredOfferForBob = Anoncreds.issuerCreateCredentialOffer(universityWallet, university.get("transcript_cred_def_id").toString()).get();
+        university.put("transcript_cred_offer",transcriptCredOfferForBob);
+
+        // offer와 관련된 내용은 이미 웹에서 제공하고 있을 듯..?
+        System.out.println("\n theUniversity가 생성한 Credential Offer를 밥에게 보낸다");
+        Bob.put("transcript_cred_offer",transcriptCredOfferForBob);
+
+        System.out.println("\n 밥은 받은 Credential offer로 부터 schemaID랑 credential definition ID를 획득");
+        Bob.put("transcript_schema_id",new JSONObject(transcriptCredOfferForBob).getString("schema_id"));
+        Bob.put("transcript_cred_def_id",new JSONObject(transcriptCredOfferForBob).getString("cred_def_id"));
+
+        System.out.println("\n밥은 VC 생성에 필요한 Master Secret을 생성하고 밥의 지갑에 저장한다");
+        String BobMasterSecretId = Anoncreds.proverCreateMasterSecret(BobWallet, null).get();
+        Bob.put("master_secret_id",BobMasterSecretId);
+
+        System.out.println("\n 밥은 알고 있는 credential definition ID로 레저로부터 Credential Definition를 가져온다");
+        LedgerResults.ParseResponseResult BobparsedCredDefResponse = getCredDef(pool, Bob.get("did").toString(), Bob.get("transcript_cred_def_id").toString());
+        Bob.put("theUniversity_transcript_cred_def",BobparsedCredDefResponse.getObjectJson());
+
+
+        // 여기서 Credential request 매개변수로 AliceWallet, AliceDID, Credential Offer, Credential Definition, Master Secret ID
+        System.out.println("\n밥은 VC생성을 위해 Issuer에게 보낼 transcript credential request를 준비한다");
+        AnoncredsResults.ProverCreateCredentialRequestResult BobcredentialRequestResult =
+                Anoncreds.proverCreateCredentialReq(BobWallet, Bob.get("did").toString(), Bob.get("transcript_cred_offer").toString(),
+                        Bob.get("theUniversity_transcript_cred_def").toString(), Bob.get("master_secret_id").toString()).get();
+        Bob.put("transcript_cred_request",BobcredentialRequestResult.getCredentialRequestJson());
+        Bob.put("transcript_cred_request_metadata",BobcredentialRequestResult.getCredentialRequestMetadataJson());
+
+        System.out.println("\n밥이 Issuer에게 Credential Request를 제출");
+        university.put("Bob_transcript_cred_request",Bob.get("transcript_cred_request"));
+
+        // 대학교에서 엘리스에게 credential을 발급해준다 (대학교가 알고 있는 엘리스의 개인정보들) - 즉, 이게 VC 인거지
+        System.out.println("\n이제 대학교가 밥을 위한 Credential을 생성한다"); // 이건 아마도 Issuer의 DB를 하나 파야할듯?
+
+        // TODO : 여기서 encoded는 무슨 값이 들어가야하지..?
+        //      암호화 한 값인가..?
+        JSONObject credValuesJsonForBob = new JSONObject()
+                .put("first_name", new JSONObject().put("raw", "Bob").put("encoded", "7221791627810333511394817164574886901"))
+                .put("last_name", new JSONObject().put("raw", "popo").put("encoded", "3587902456789123452532164278024179012"))
+                .put("degree", new JSONObject().put("raw", "Computer Science").put("encoded", "12434523576212321"))
+                .put("status", new JSONObject().put("raw", "now").put("encoded", "3412354221345431"))
+                .put("ssn", new JSONObject().put("raw", "321-45-9876").put("encoded", "4225435413124141231"))
+                .put("year", new JSONObject().put("raw", "2018").put("encoded", "2018"))
+                .put("average", new JSONObject().put("raw", "6").put("encoded", "6"));
+
+        university.put("Bob_transcript_cred_values",credValuesJsonForBob);
+
+        // 대학교가 CredentialResult를 생성한다 (IssuerWallet, cred_offer, cred_request, credValuesJson, ...)
+        AnoncredsResults.IssuerCreateCredentialResult issuerCredentialResultForBob =
+                Anoncreds.issuerCreateCredential(universityWallet, university.get("transcript_cred_offer").toString(),university.get("Bob_transcript_cred_request").toString(),
+                        university.get("Bob_transcript_cred_values").toString(),null,0).get();
+        /*
+                AnoncredsResults.IssuerCreateCredentialResult issuerCredentialResult =
+                Anoncreds.issuerCreateCredential(universityWallet, university.get("transcript_cred_offer").toString(),university.get("transcript_cred_request").toString(),
+                        university.get("alice_transcript_cred_values").toString(),null,0).get();
+
+         */
+
+        // 이게 생성한 VC임
+        university.put("Bob_transcript_cred",issuerCredentialResultForBob.getCredentialJson());
+        System.out.println("\n 생성한 VC : " + university.get("Bob_transcript_cred"));
+
+        System.out.println("\ntheUniversity가 밥에게 생성한 VC를 보낸다");
+        Bob.put("transcript_cred",university.get("Bob_transcript_cred"));
+
+        // 생성한 VC를 밥의 지갑에 저장
+        System.out.println("\n밥이 받은 VC를 저장");
+        Anoncreds.proverStoreCredential(BobWallet, null, Bob.get("transcript_cred_request_metadata").toString()
+                , Bob.get("transcript_cred").toString(), Bob.get("theUniversity_transcript_cred_def").toString(), null);
+
+        // TODO : 밥의 Step 7!!
+        // STEP7 - Bob makes verifiable presentation(VP) to Company 즉, VP(Verifiable Presentation) 생성
+        // 우리는 차량 등록시에 VP를 제출하고 서비스에서 검증한 후 검증한 데이터를 아마도..? (애매하네)
+        System.out.println("\n\n\nSTEP7 - Bob makes verifiable presentation(VP) to Company\n");
+
+        // 우린 서비스에서 차량 전용 Proof Request를 만들어야 함 (이게 회사에서 필요한 양식)
+        // 그러니깐 우리회사에 지원할 꺼면 first_name, last_name,degree,status,ssn,phone_number를 내라! 이거네
+        System.out.println("\ntheCompany가 Holder가 제출해야할 Proof Request(VP양식)을 만든다");
+
+        // TODO : transcriptRestrictions는 뭐지? 여기서 nonce는 왜 필요?
+        String nonceForBob = Anoncreds.generateNonce().get();
+        JSONArray transcriptRestrictionsForBob = new JSONArray().put(new JSONObject().put("cred_def_id", university.get("transcript_cred_def_id").toString()));
+
+        // TODO : 이부분 완벽 이해 필요
+        // 즉, VP 양식을 만든다 nonce로 항상 바뀔듯?
+        String proofRequestJsonForBob = new JSONObject()
+                .put("nonce", nonceForBob)
+                .put("name", "Job-Application")
+                .put("version", "0.1")
+                .put("requested_attributes", new JSONObject()
+                        .put("attr1_referent", new JSONObject().put("name", "first_name"))
+                        .put("attr2_referent", new JSONObject().put("name", "last_name"))
+                        .put("attr3_referent", new JSONObject().put("name", "degree").put("restrictions", transcriptRestrictionsForBob))
+                        .put("attr4_referent", new JSONObject().put("name", "status").put("restrictions", transcriptRestrictionsForBob))
+                        .put("attr5_referent", new JSONObject().put("name", "ssn").put("restrictions", transcriptRestrictionsForBob))
+                        .put("attr6_referent", new JSONObject().put("name", "year").put("restrictions", transcriptRestrictionsForBob)))
+                .put("requested_predicates", new JSONObject()
+                        .put("predicate1_referent", new JSONObject()
+                                .put("name", "average")
+                                .put("p_type", ">=")
+                                .put("p_value", 4)
+                                .put("restrictions", transcriptRestrictionsForBob)))
+                .toString();
+
+        company.put("Bob_job_application_proof_request", proofRequestJsonForBob);
+        System.out.println("\n즉, 이 Json 형식이 유저가 제출해야할 VP 양식임 " + proofRequestJsonForBob);
+
+        // 회사가 위에서 만든 Proof Request (지원 양식)을 Alice에게 전해주면 VC로 채워서 제출
+        // 아마 이건 nonce값이 있어서 흠...
+        System.out.println("\ntheCompany가 엘리스에게 Proof Request(VP 양식)을 넘겨준다");
+        Bob.put("job_application_proof_request", company.get("Bob_job_application_proof_request"));
+
+        // TODO : 내가 이해한게 맞나?
+        //      근데 저걸로 VC를 어떻게 찾지?
+        // 즉, 받은 양식을 VC로 채워서 보내는게 VP
+        System.out.println("\n 밥이 Proof Request 양식(VP)을 채우기위해 밥의 지갑에서 credential(VC)을 획득한다");
+        CredentialsSearchForProofReq search_for_job_application_proof_request_forbob = CredentialsSearchForProofReq.open(
+                BobWallet, Bob.get("job_application_proof_request").toString(), null).get();
+
+        System.out.println("====================================================================");
+        System.out.println("\n얘 정체는 ? :"+search_for_job_application_proof_request_forbob);
+        System.out.println("====================================================================");
+
+
+        // TODO : 즉 위에서 찾은 VC에서 필요한 데이터들을 뽑는 과정같음
+        JSONArray credentialsForAttribute3ForBob = new JSONArray(search_for_job_application_proof_request_forbob.fetchNextCredentials("attr3_referent", 100).get());
+        String credentialIdForAttribute3ForBob = credentialsForAttribute3ForBob.getJSONObject(0).getJSONObject("cred_info").getString("referent");
+
+        JSONArray credentialsForAttribute4ForBob = new JSONArray(search_for_job_application_proof_request_forbob.fetchNextCredentials("attr4_referent", 100).get());
+        String credentialIdForAttribute4ForBob = credentialsForAttribute4ForBob.getJSONObject(0).getJSONObject("cred_info").getString("referent");
+
+        JSONArray credentialsForAttribute5ForBob = new JSONArray(search_for_job_application_proof_request_forbob.fetchNextCredentials("attr5_referent", 100).get());
+        String credentialIdForAttribute5ForBob = credentialsForAttribute5ForBob.getJSONObject(0).getJSONObject("cred_info").getString("referent");
+
+        JSONArray credentialsForAttribute6ForBob = new JSONArray(search_for_job_application_proof_request_forbob.fetchNextCredentials("attr6_referent", 100).get());
+        String credentialIdForAttribute6ForBob = credentialsForAttribute6ForBob.getJSONObject(0).getJSONObject("cred_info").getString("referent");
+
+        JSONArray credentialsForPredicate1ForBob = new JSONArray(search_for_job_application_proof_request_forbob.fetchNextCredentials("predicate1_referent", 100).get());
+        String credentialIdForPredicate1ForBob = credentialsForPredicate1ForBob.getJSONObject(0).getJSONObject("cred_info").getString("referent");
+
+        search_for_job_application_proof_request_forbob.close();
+
+
+
+
+
+        // ==================================================================================================================
+
+        // TODO : 지갑에서 현재 가지고 있는 VC 조회하기!
+        //          proverStoreCredential의 용도가 뭔지 확인하자
+        //          그리고 Holder입장에서 VC를 어떻게
+
+        // STEP7 - Alice makes verifiable presentation(VP) to Company 즉, VP(Verifiable Presentation) 생성
         // 우리는 차량 등록시에 VP를 제출하고 서비스에서 검증한 후 검증한 데이터를 아마도..? (애매하네)
         System.out.println("\n\n\nSTEP7 - Alice makes verifiable presentation(VP) to Company\n");
 
         // 우린 서비스에서 차량 전용 Proof Request를 만들어야 함 (이게 회사에서 필요한 양식)
         // 그러니깐 우리회사에 지원할 꺼면 first_name, last_name,degree,status,ssn,phone_number를 내라! 이거네
-        System.out.println("\"theCompany\" -> Create \"Job-Application\" Proof Request");
+        System.out.println("\ntheCompany가 Holder가 제출해야할 Proof Request(VP양식)을 만든다");
 
+        // TODO : transcriptRestrictions는 뭐지? 여기서 nonce는 왜 필요?
         String nonce = Anoncreds.generateNonce().get();
         JSONArray transcriptRestrictions = new JSONArray().put(new JSONObject().put("cred_def_id", university.get("transcript_cred_def_id").toString()));
 
+        // TODO : 이부분 완벽 이해 필요
+        // 즉, VP 양식을 만든다 nonce로 항상 바뀔듯?
         String proofRequestJson = new JSONObject()
                 .put("nonce", nonce)
                 .put("name", "Job-Application")
@@ -478,30 +565,28 @@ public class indytest {
                 .toString();
 
         company.put("job_application_proof_request", proofRequestJson);
+        System.out.println("\n즉, 이 Json 형식이 유저가 제출해야할 VP 양식임 " + proofRequestJson.toString());
 
-
-        System.out.println("Job-Application Proof Request: " + proofRequestJson.toString());
-
-        // 회사가 위에서 만든 Proof Request (지원 양식)을 Alice에게 전해줌
-        // ALice는 이전에 발급받은 VC로 양식을 채워서 다시 제출해야할듯?
-        System.out.println("\n\"theCompany\" -> Send \"Job-Application\" Proof Request to Alice");
+        // 회사가 위에서 만든 Proof Request (지원 양식)을 Alice에게 전해주면 VC로 채워서 제출
+        // 아마 이건 nonce값이 있어서 흠...
+        System.out.println("\ntheCompany가 엘리스에게 Proof Request(VP 양식)을 넘겨준다");
         Alice.put("job_application_proof_request", company.get("job_application_proof_request"));
 
+        // TODO : 내가 이해한게 맞나?
+        //      근데 저걸로 VC를 어떻게 찾지?
         // 즉, 받은 양식을 VC로 채워서 보내는게 VP
-        // Alice는 양식 받아서 Presentation(VP)을 준비함
-        System.out.println("\"Alice\" -> Get credentials for \"Job-Application\" Proof Request");
-
-        // TODO : 엘리스 지갑에서 꺼낸듯?
+        System.out.println("\n 엘리스가 Proof Request 양식(VP)을 채우기위해 엘리스 지갑에서 credential(VC)을 획득한다");
         CredentialsSearchForProofReq search_for_job_application_proof_request = CredentialsSearchForProofReq.open(
                 AliceWallet, Alice.get("job_application_proof_request").toString(), null).get();
-
+        
         System.out.println("====================================================================");
-        System.out.println(search_for_job_application_proof_request);
+        System.out.println("\n얘 정체는 ? :"+search_for_job_application_proof_request);
         System.out.println("====================================================================");
 
 
-        // TODO : 이 부분 이해가 잘안되네
+        // TODO : 즉 위에서 찾은 VC에서 필요한 데이터들을 뽑는 과정같음
         JSONArray credentialsForAttribute3 = new JSONArray(search_for_job_application_proof_request.fetchNextCredentials("attr3_referent", 100).get());
+        System.out.println("Alice !! :" + credentialsForAttribute3);
         String credentialIdForAttribute3 = credentialsForAttribute3.getJSONObject(0).getJSONObject("cred_info").getString("referent");
 
         JSONArray credentialsForAttribute4 = new JSONArray(search_for_job_application_proof_request.fetchNextCredentials("attr4_referent", 100).get());
@@ -519,11 +604,14 @@ public class indytest {
         search_for_job_application_proof_request.close();
 
         // Alice -> Create Job-Application Proof
-        // 우리회사에 지원할 꺼면 first_name, last_name,    (degree,status,ssn),    phone_number
+        // TODO : 여기서 다른 유저(Bob)의 VC를 가지고 VP를 만들게 되면 애초에 에러가 남 !!
+        //          즉 VP에 다른 VC값을 넣을 수 없는건가?
+        System.out.println("\n 즉 엘리스가 VC에서 뽑은 데이터를 사용해서 VP를 만드는 과정");
         String credentialsJson = new JSONObject()
                 .put("self_attested_attributes", new JSONObject()
                         .put("attr1_referent", "Alice")
                         .put("attr2_referent", "Garcia"))
+                // requested_attributes는 VC에서 뽑은 데이터
                 .put("requested_attributes", new JSONObject()
                         .put("attr3_referent", new JSONObject()
                                 .put("cred_id", credentialIdForAttribute3)
@@ -537,15 +625,19 @@ public class indytest {
                         .put("attr6_referent", new JSONObject()
                                 .put("cred_id", credentialIdForAttribute6)
                                 .put("revealed", true)))
+                // requested_predicates 이거는 영지식 증명들
                 .put("requested_predicates", new JSONObject()
                         .put("predicate1_referent", new JSONObject()
                                 .put("cred_id",credentialIdForPredicate1)))
                 .toString();
 
+        Alice.put("job_application_requested_creds",credentialsJson);
+
+
+        // TODO : 이쪽은 진짜 모르겠네
         JSONObject schemasMap = new JSONObject();
         JSONObject credDefsMap = new JSONObject();
 
-        // schemasMap, credDefsMap 이 부분 하나씩만!!!!!!!!!!!!!!! 해보자
         populateCredentialInfo(pool, Alice.get("did").toString(), schemasMap, credDefsMap, credentialsForAttribute3);
         populateCredentialInfo(pool, Alice.get("did").toString(), schemasMap, credDefsMap, credentialsForAttribute4);
         populateCredentialInfo(pool, Alice.get("did").toString(), schemasMap, credDefsMap, credentialsForAttribute5);
@@ -555,36 +647,36 @@ public class indytest {
         String credDefs = credDefsMap.toString();
         String revocState = new JSONObject().toString();
 
+        System.out.println("\nschemas :" +schemas);
+        System.out.println("\ncredDefs :" +credDefs);
 
-        Alice.put("job_application_requested_creds",credentialsJson);
-
-        //Alice creates the Proof for Acme Job-Application Proof Request
-        // proof가 최종 제출할 VP
+        // Alice가 최종 제출할 Proof(VP)
+        // alice지갑, proof_request, requested_creds(VP) , Master Secret Id, schemas,credDefs,revocState)
+        System.out.println("\n\n Verifier에게 제출할 최종 VP \n");
         String proofJson = Anoncreds.proverCreateProof(AliceWallet, Alice.get("job_application_proof_request").toString()
                 ,Alice.get("job_application_requested_creds").toString()
                 ,Alice.get("master_secret_id").toString()
                 ,schemas, credDefs, revocState).get();
 
-        JSONObject proof = new JSONObject(proofJson);
+        Alice.put("job_application_proof", new JSONObject(proofJson));
 
-        System.out.println("\n\n 최종 VP \n");
-        System.out.println(proof);
+        System.out.println(Alice.get("job_application_proof"));
         System.out.println("==============");
-        Alice.put("job_application_proof", proof);
+
 
         // 이렇게 만든 VP를 Company에 제출!
-        System.out.println( "\n\"Alice\" -> Send \"Job-Application\" Proof to theCompany" );
+        System.out.println("\n 엘리스가 theCompany에 Proof(VP)를 제출");
         company.put("job_application_proof", Alice.get("job_application_proof"));
 
         /*
             TODO : 테스트 : 만약 수정이 일어난다면 ??
          */
 
-        JSONObject data = new JSONObject(Alice.get("job_application_proof").toString());
-        JSONArray cList = data.getJSONObject("proof")
-                .getJSONObject("aggregated_proof")
-                .getJSONArray("c_list");
-        cList.getJSONArray(0).put(0, 150);
+//        JSONObject data = new JSONObject(Alice.get("job_application_proof").toString());
+//        JSONArray cList = data.getJSONObject("proof")
+//                .getJSONObject("aggregated_proof")
+//                .getJSONArray("c_list");
+//        cList.getJSONArray(0).put(0, 150);
 
 //        JSONObject data = new JSONObject(Alice.get("job_application_proof").toString());
 //        data.getJSONObject("requested_proof")
@@ -596,16 +688,14 @@ public class indytest {
 //
 //        System.out.println(data);
 //
-        company.put("job_application_proof",data);
+//        company.put("job_application_proof",data);
 //        System.out.println(company.get("job_application_proof"));
-
-        //?!
 
         // 마지막 STEP 8 !!! 회사가 받은 엘리스의 VP를 검증하는 과정!!!!!!!!!
         // company.get("job_application_proof") 이게 받은거
         System.out.println("\n\n\n STEP8 - Company validates Alice's claims");
 
-        //company.get("job_application_proof");
+        // 이건 이미 결과를 알고있고 비교하는거고...
         JSONObject selfAttestedAttrs = new JSONObject(company.get("job_application_proof").toString()).getJSONObject("requested_proof").getJSONObject("self_attested_attrs");
         JSONObject revealedAttrs = new JSONObject(company.get("job_application_proof").toString()).getJSONObject("requested_proof").getJSONObject("revealed_attrs");
         System.out.println("SelfAttestedAttrs: " + selfAttestedAttrs);
@@ -630,8 +720,8 @@ public class indytest {
         System.out.println("일치 : " + same +"\n\n");
 
         // 마무리
-        closeAndDeletePoolLedger(stewardWallet,governmentWallet,universityWallet,companyWallet,AliceWallet
-                ,steward,government,university,company,Alice,pool);
+        closeAndDeletePoolLedger(stewardWallet,governmentWallet,universityWallet,companyWallet,AliceWallet,
+                BobWallet,steward,government,university,company,Alice,Bob,pool);
 
     }
 
@@ -769,8 +859,9 @@ public class indytest {
         return pool;
     }
 
-    public static void closeAndDeletePoolLedger(Wallet w1, Wallet w2, Wallet w3, Wallet w4, Wallet w5,
-                                                Map<String, Object> m1, Map<String, Object> m2, Map<String, Object> m3, Map<String, Object> m4 , Map<String, Object> m5,Pool pool) throws Exception {
+    public static void closeAndDeletePoolLedger(Wallet w1, Wallet w2, Wallet w3, Wallet w4, Wallet w5,Wallet w6,
+                                                Map<String, Object> m1, Map<String, Object> m2, Map<String, Object> m3, Map<String, Object> m4 ,
+                                                Map<String, Object> m5,Map<String, Object> m6,Pool pool) throws Exception {
 
         // 엘리스 지갑, 대학교 지갑, 회사 지갑, 정부 지갑, seward 지갑 삭제
         closeAndDeleteWallet(w1, m1.get("wallet_config").toString(), m1.get("wallet_credentials").toString());
@@ -778,6 +869,7 @@ public class indytest {
         closeAndDeleteWallet(w3, m3.get("wallet_config").toString(), m3.get("wallet_credentials").toString());
         closeAndDeleteWallet(w4, m4.get("wallet_config").toString(), m4.get("wallet_credentials").toString());
         closeAndDeleteWallet(w5, m5.get("wallet_config").toString(), m5.get("wallet_credentials").toString());
+        closeAndDeleteWallet(w6, m6.get("wallet_config").toString(), m6.get("wallet_credentials").toString());
 
         pool.closePoolLedger().get();
         Pool.deletePoolLedgerConfig("pool1").get();

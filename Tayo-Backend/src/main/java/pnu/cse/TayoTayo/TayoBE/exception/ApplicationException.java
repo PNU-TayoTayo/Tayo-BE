@@ -1,4 +1,4 @@
-package pnu.cse.TayoTayo.TayoBE.service.exception;
+package pnu.cse.TayoTayo.TayoBE.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,10 +14,9 @@ public class ApplicationException extends RuntimeException {
     private LocalDateTime timestamp;
 
 
-
-    public ApplicationException(ErrorCode errorCode,String message){
+    public ApplicationException(ErrorCode errorCode){
         this.errorCode = errorCode;
-        this.message = message;
+        this.message = errorCode.getMessage();
         this.timestamp = LocalDateTime.now();
     }
 }

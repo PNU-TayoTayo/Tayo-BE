@@ -12,11 +12,7 @@ public class Response<T> {
     private T data;
 
     public static <T> Response<T> error(String message, T data){
-        return new Response<>("FAIL", message , data );
-    }
-
-    public static Response<Void> success(){
-        return new Response<Void>("SUCCESS", "성공!!",null);
+        return new Response<>("ERROR", message , data);
     }
 
     public static Response<Void> success(String message){
@@ -28,12 +24,3 @@ public class Response<T> {
     }
 
 }
-
-// ex)
-//      {
-//        "result": "SUCCESS",
-//        "message": "Create Room Successfully",
-//        "data": {
-//          "roomId":
-//        }
-//      }

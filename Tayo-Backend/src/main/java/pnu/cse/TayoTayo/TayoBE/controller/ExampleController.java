@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "tayo-api", description = "타요타요 API")
 @RestController
-@RequestMapping("/tayotayo")
+@RequestMapping("/tayotest")
 public class ExampleController {
 
     //http://localhost:8080/swagger-ui/index.html#/tayo-api
@@ -28,13 +28,7 @@ public class ExampleController {
         return "예시 API";
     }
 
-    /*
-        회원 가입 API
 
-
-
-
-     */
 
 
 }

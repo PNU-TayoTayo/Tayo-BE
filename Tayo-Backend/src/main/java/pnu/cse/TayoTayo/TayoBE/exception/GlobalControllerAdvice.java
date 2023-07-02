@@ -1,4 +1,4 @@
-package pnu.cse.TayoTayo.TayoBE.service.exception;
+package pnu.cse.TayoTayo.TayoBE.exception;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -16,15 +16,15 @@ public class GlobalControllerAdvice {
 
     @ExceptionHandler(ApplicationException.class)
     public ResponseEntity<?> applicationHandler(ApplicationException e){
-        log.error("Error occurs {}", e.toString());
-        String message = e.getMessage();
+        log.error("Error occurs : {}", e.toString());
+
         Map<String,Object> data = new HashMap<>();
+        data.put("status", e.getErrorCode().getStatus());
         data.put("errorCode", e.getErrorCode().getErrorCode());
-        data.put("description", e.getErrorCode().getDescription());
         data.put("timestamp", e.getTimestamp());
 
         return ResponseEntity.status(e.getErrorCode().getStatus())
-                .body(Response.error(message,data));
+                .body(Response.error(e.getErrorCode().getMessage(),data));
     }
 
     @ExceptionHandler(RuntimeException.class)

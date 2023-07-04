@@ -6,17 +6,15 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
 
-@Getter
-@AllArgsConstructor
-@NoArgsConstructor
-public class MemberJoinRequest {
-
-    //@NotEmpty(message = "email은 필수 입니다.")
-    private String email;
-    private String password;
-    private String name;
-    private String phoneNumber;
-    private String nickName;
-    private String introduce;
-
-}
+//@Getter
+//public class MemberJoinRequest {
+//
+//    //@NotEmpty(message = "email은 필수 입니다.")
+//    private String email;
+//    private String password;
+//    private String name;
+//    private String phoneNumber;
+//    private String nickName;
+//    private String introduce;
+//
+//}

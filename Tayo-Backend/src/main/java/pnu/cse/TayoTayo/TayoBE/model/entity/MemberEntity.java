@@ -1,7 +1,6 @@
 package pnu.cse.TayoTayo.TayoBE.model.entity;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
@@ -11,6 +10,8 @@ import java.time.Instant;
 @Getter
 @Setter
 @Table(name="member")
+@NoArgsConstructor
+@AllArgsConstructor
 public class MemberEntity {
     /*
         아이디 Id
@@ -34,6 +35,8 @@ public class MemberEntity {
     @GeneratedValue
     private Long id;
 
+    @Enumerated(EnumType.STRING)
+    private MemberRole role;
     private String email;
     private String password;
 
@@ -57,18 +60,30 @@ public class MemberEntity {
         this.updatedAt = Timestamp.from(Instant.now());
     }
 
-
-    public static MemberEntity of(String email, String password, String name, String phoneNumber,
-                            String nickName, String introduce){
-        MemberEntity memberEntity = new MemberEntity();
-        memberEntity.setEmail(email);
-        memberEntity.setPassword(password);
-        memberEntity.setName(name);
-        memberEntity.setPhoneNumber(phoneNumber);
-        memberEntity.setNickName(nickName);
-        memberEntity.setIntroduce(introduce);
-
-        return memberEntity;
+    @Builder
+    public MemberEntity(Long id, MemberRole role, String email, String password, String name, String phoneNumber, String nickName, String introduce) {
+        this.id = id;
+        this.role = role;
+        this.email = email;
+        this.password = password;
+        this.name = name;
+        this.phoneNumber = phoneNumber;
+        this.nickName = nickName;
+        this.introduce = introduce;
     }
+
+//    @Builder
+//    public static MemberEntity(String email, String password, String name, String phoneNumber,
+//                            String nickName, String introduce){
+//        MemberEntity memberEntity = new MemberEntity();
+//        memberEntity.setEmail(email);
+//        memberEntity.setPassword(password);
+//        memberEntity.setName(name);
+//        memberEntity.setPhoneNumber(phoneNumber);
+//        memberEntity.setNickName(nickName);
+//        memberEntity.setIntroduce(introduce);
+//
+//        return memberEntity;
+//    }
 
 }

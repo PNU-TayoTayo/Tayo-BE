@@ -17,11 +17,17 @@ public class MemberRepository {
         em.persist(member);
     }
 
+    public MemberEntity findOne(Long Id){
+        return em.find(MemberEntity.class, Id);
+    }
+
     // 이메일 중복 체크 or 로그인 시
     public List<MemberEntity> findByEmail(String Email){
         return em.createQuery("select m from MemberEntity m where m.email =:email", MemberEntity.class)
                 .setParameter("email",Email)
                 .getResultList();
     }
+
+
 
 }

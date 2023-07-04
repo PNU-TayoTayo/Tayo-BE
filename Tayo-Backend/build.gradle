@@ -25,12 +25,29 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	// 스프링 부트 웹 애플리케이션 개발을 위한 필수 의존성을 제공
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	// 자바 개발자 편의성 기능 제공
 	compileOnly 'org.projectlombok:lombok'
-	runtimeOnly 'com.mysql:mysql-connector-j'
 	annotationProcessor 'org.projectlombok:lombok'
+
+	// 배포시 사용할 MySQL 의존성
+	runtimeOnly 'com.mysql:mysql-connector-j'
+
+	// 테스트를 작성하기 위한 기능을 제공
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+	// H2 데이터베이스를 사용하기 위한 의존성을 제공 (테스트 용)
+	runtimeOnly 'com.h2database:h2'
+
+	// 시큐리티 관련
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation group: 'com.auth0', name: 'java-jwt', version: '4.3.0'
+	testImplementation 'org.springframework.security:spring-security-test'
+
+	// JPA (Java Persistence API)를 제공
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
 	// swagger ui
 	implementation 'org.springdoc:springdoc-openapi-ui:1.6.15'

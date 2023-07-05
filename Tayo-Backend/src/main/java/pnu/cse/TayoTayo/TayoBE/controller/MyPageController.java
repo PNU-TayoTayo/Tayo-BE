@@ -6,10 +6,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import pnu.cse.TayoTayo.TayoBE.config.security.CustomUserDetails;
+import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
 import pnu.cse.TayoTayo.TayoBE.dto.response.MemberInfoResponse;
+import pnu.cse.TayoTayo.TayoBE.dto.response.MemberIntroResponse;
 import pnu.cse.TayoTayo.TayoBE.dto.response.Response;
 import pnu.cse.TayoTayo.TayoBE.model.Member;
-import pnu.cse.TayoTayo.TayoBE.service.MemberService;
 import pnu.cse.TayoTayo.TayoBE.service.MyPageService;
 
 
@@ -18,9 +19,6 @@ import pnu.cse.TayoTayo.TayoBE.service.MyPageService;
 @RequestMapping("/tayo/my")
 @RequiredArgsConstructor
 public class MyPageController {
-
-    private final MemberService memberService;
-
     private final MyPageService myPageService;
 
     @Operation(summary = "내 정보 조회", description = "내 정보를 조회하는 API입니다.")
@@ -28,27 +26,38 @@ public class MyPageController {
     public Response<MemberInfoResponse> myInfo(Authentication authentication){
         Member member = myPageService.myInfo(((CustomUserDetails) authentication.getPrincipal()).getId());
 
-        return Response.success("본인 정보를 성공적으로 가져옴(임시)", MemberInfoResponse.fromMember(member));
+        return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
     }
 
-//    @Operation(summary = "비밀번호 수정", description = "비밀번호 수정하는 API입니다.")
-//    @GetMapping
-//    public Response<MemberInfoResponse> myInfo(Authentication authentication){
-//        Member member = myPageService.myInfo(((CustomUserDetails) authentication.getPrincipal()).getId());
-//
-//        return Response.success("본인 정보를 성공적으로 가져옴(임시)", MemberInfoResponse.fromMember(member));
-//    }
-//
-//
-//    @Operation(summary = "내 정보 조회", description = "내 정보를 조회하는 API입니다.")
-//    @GetMapping
-//    public Response<MemberInfoResponse> myInfo(Authentication authentication){
-//        Member member = myPageService.myInfo(((CustomUserDetails) authentication.getPrincipal()).getId());
-//
-//        return Response.success("본인 정보를 성공적으로 가져옴(임시)", MemberInfoResponse.fromMember(member));
-//    }
+    // TODO : 회원 탈퇴시 지갑 삭제도 해줘야 함!
+    @Operation(summary = "회원 탈퇴", description = "회원 탈퇴하는 API입니다.")
+    @DeleteMapping
+    public Response<Void> deleteMember(Authentication authentication, @RequestBody MemberRequest.DeleteMemberRequest request){
+
+        myPageService.deleteMember(((CustomUserDetails) authentication.getPrincipal()).getId(),request.getCurrentPassword());
+
+        return Response.success("회원 탈퇴에 성공하셨습니다.");
+    }
 
 
+    @Operation(summary = "비밀번호 수정", description = "비밀번호 수정하는 API입니다.")
+    @PatchMapping("/password")
+    public Response<Void> modifyPassword(Authentication authentication, @RequestBody MemberRequest.ModifyPasswordRequest request){
+
+        myPageService.modifyPassword(((CustomUserDetails) authentication.getPrincipal()).getId(),request);
+
+        return Response.success("비밀번호 수정에 성공하셨습니다.");
+    }
+
+
+    @Operation(summary = "한줄 소개 수정", description = "한줄 소개 수정하는 API입니다.")
+    @PatchMapping("/introduce")
+    public Response<MemberIntroResponse> modifyIntroduce(Authentication authentication, @RequestBody MemberRequest.ModifyIntroduceRequest request){
+
+        Member member = myPageService.modifyIntroduce(((CustomUserDetails) authentication.getPrincipal()).getId(), request.getNewIntroduce());
+
+        return Response.success("한줄 소개 수정에 성공하셨습니다.", MemberIntroResponse.fromMember(member));
+    }
 
 
 

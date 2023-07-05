@@ -77,7 +77,8 @@ public class SecurityConfig {
         // 10. 인증, 권한 필터 설정
         http.authorizeRequests(
                 authorize -> authorize.antMatchers("/tayo/my/**","/tayo/car/**").authenticated()
-                        .antMatchers("/admin/**").access("hasRole('ADMIN')").anyRequest().permitAll()
+                        .antMatchers("/admin/**").access("hasRole('ADMIN')")
+                        .anyRequest().permitAll()
         );
 
         return http.build();

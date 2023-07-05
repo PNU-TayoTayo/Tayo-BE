@@ -7,6 +7,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import pnu.cse.TayoTayo.TayoBE.model.entity.MemberEntity;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -18,9 +19,20 @@ public class CustomUserDetails implements UserDetails {
     private final MemberEntity member;
 
     // TODO : 이게 뭘까?
+//    @Override
+//    public Collection<? extends GrantedAuthority> getAuthorities() {
+//        return Arrays.stream(member.getRole().toString().split(",")).map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+//    }
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Arrays.stream(member.getRole().toString().split(",")).map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+        Collection<GrantedAuthority> collect = new ArrayList<>();
+        collect.add(new GrantedAuthority() {
+            @Override
+            public String getAuthority() {
+                return member.getRole().toString();
+            }
+        });
+        return collect;
     }
 
 

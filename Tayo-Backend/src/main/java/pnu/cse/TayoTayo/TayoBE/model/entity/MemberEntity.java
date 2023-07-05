@@ -72,18 +72,5 @@ public class MemberEntity {
         this.introduce = introduce;
     }
 
-//    @Builder
-//    public static MemberEntity(String email, String password, String name, String phoneNumber,
-//                            String nickName, String introduce){
-//        MemberEntity memberEntity = new MemberEntity();
-//        memberEntity.setEmail(email);
-//        memberEntity.setPassword(password);
-//        memberEntity.setName(name);
-//        memberEntity.setPhoneNumber(phoneNumber);
-//        memberEntity.setNickName(nickName);
-//        memberEntity.setIntroduce(introduce);
-//
-//        return memberEntity;
-//    }
 
 }

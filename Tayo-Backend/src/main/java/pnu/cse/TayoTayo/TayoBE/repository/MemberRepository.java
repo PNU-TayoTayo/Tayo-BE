@@ -28,6 +28,11 @@ public class MemberRepository {
                 .getResultList();
     }
 
+    public void delete(MemberEntity member){
+        em.remove(member);
+    }
+
+
 
 
 }

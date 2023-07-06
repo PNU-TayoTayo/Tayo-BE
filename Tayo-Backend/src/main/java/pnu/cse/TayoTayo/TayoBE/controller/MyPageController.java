@@ -30,6 +30,8 @@ public class MyPageController {
     }
 
     // TODO : 회원 탈퇴시 지갑 삭제도 해줘야 함!
+    //          강제로 지갑 파일을 삭제해주는 식으로 해야할 듯????
+
     @Operation(summary = "회원 탈퇴", description = "회원 탈퇴하는 API입니다.")
     @DeleteMapping
     public Response<Void> deleteMember(Authentication authentication, @RequestBody MemberRequest.DeleteMemberRequest request){

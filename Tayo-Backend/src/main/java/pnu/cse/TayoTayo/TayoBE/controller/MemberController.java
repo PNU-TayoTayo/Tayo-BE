@@ -4,6 +4,7 @@ package pnu.cse.TayoTayo.TayoBE.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.hyperledger.indy.sdk.IndyException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,6 +16,8 @@ import pnu.cse.TayoTayo.TayoBE.dto.response.Response;
 import pnu.cse.TayoTayo.TayoBE.dto.response.MemberResponse;
 import pnu.cse.TayoTayo.TayoBE.model.Member;
 import pnu.cse.TayoTayo.TayoBE.service.MemberService;
+
+import java.util.concurrent.ExecutionException;
 
 @Tag(name = "tayo-api", description = "타요타요 API")
 @RestController
@@ -31,7 +34,7 @@ public class MemberController {
     @Operation(summary = "타요타요 서비스 회원가입", description = "해당 API를 사용해서 타요타요 서비스 회원가입이 가능합니다")
     //@Parameter(name = "str", description = "2번 반복할 문자열")
     @PostMapping("/join")
-    public Response<MemberResponse> join(@RequestBody MemberRequest.MemberJoinRequest request){
+    public Response<MemberResponse> join(@RequestBody MemberRequest.MemberJoinRequest request) throws IndyException, ExecutionException, InterruptedException {
 
         Member member = memberService.join(request);
 

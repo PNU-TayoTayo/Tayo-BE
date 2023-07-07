@@ -7,10 +7,14 @@ import org.hyperledger.indy.sdk.did.DidResults;
 import org.hyperledger.indy.sdk.ledger.Ledger;
 import org.hyperledger.indy.sdk.pool.Pool;
 import org.hyperledger.indy.sdk.wallet.Wallet;
+import org.json.HTTP;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -23,7 +27,7 @@ import java.util.concurrent.ExecutionException;
 public class PoolAndWalletManager {
 
     /*
-        TODO : 지갑 생성하고 close 상태로 둬야 할까?
+        TODO : 지갑 생성하고 close 상태로 둬야 할까? ㅇㅇ
 
      */
 
@@ -138,39 +142,57 @@ public class PoolAndWalletManager {
     public void createMemberWallet(String userEmail, String walletPassword) throws IndyException, ExecutionException, InterruptedException {
 
         System.out.println("\n\n=== 회원가입시 Tayo 서비스 유저의 지갑 생성 시작===");
+        Wallet.createWallet(getWalletConfig(userEmail), new JSONObject().put("key",walletPassword).toString()).get();
+        Wallet memberWallet = Wallet.openWallet(getWalletConfig(userEmail), new JSONObject().put("key",walletPassword).toString()).get();
 
-        Map<String, Object> memberInfo = new HashMap<>();
+        System.out.println("\n\n==="+userEmail+"의 지갑 생성 완료===");
+        memberWallet.closeWallet().get();
+    }
 
-        memberInfo.put("wallet_config",
-                new JSONObject().put("id", userEmail)
-                        .put("storage_config", new JSONObject()
-                                .put("path", "src/main/java/pnu/cse/TayoTayo/TayoBE/wallet/member_wallet")).toString());
-        memberInfo.put("wallet_credentials", new JSONObject().put("key",walletPassword).toString());
+    public static String getWalletConfig(String userEmail){
+        return new JSONObject().put("id", userEmail).put("storage_config", new JSONObject()
+                .put("path", "src/main/java/pnu/cse/TayoTayo/TayoBE/wallet/member_wallet")).toString();
+    }
 
-        Wallet.createWallet(memberInfo.get("wallet_config").toString(), memberInfo.get("wallet_credentials").toString()).get();
-        Wallet memberWallet = Wallet.openWallet(memberInfo.get("wallet_config").toString(), memberInfo.get("wallet_credentials").toString()).get();
+    public void getCredentialOfferFromVCService(String userEmail, String walletPassword) throws IndyException, ExecutionException, InterruptedException {
 
-        // 존재하면
-        if(memberWallet != null){
+        // 해당 유저의 지갑 오픈
+        Wallet userWallet = Wallet.openWallet(getWalletConfig(userEmail), new JSONObject().put("key", walletPassword).toString()).get();
+
+        // 자동차에 대한 DID 생성!!
+        if(userWallet != null){
             try {
-                DidResults.CreateAndStoreMyDidResult didResult = Did.createAndStoreMyDid(memberWallet, "{}").get();
+                DidResults.CreateAndStoreMyDidResult didResult = Did.createAndStoreMyDid(userWallet, "{}").get();
 
-                // TODO : 유저의 생성한 did랑 key 값을 어디다 저장해야하지 ???? 흠... (DB에 해도 될려나 고민해보자!)
-                //Tayo.put("did",didResult.getDid());
-                //Tayo.put("key",didResult.getVerkey());
+                System.out.println("생성한 자동차 DID : " + didResult.getDid());
+                System.out.println("생성한 자동차 DID의 VerKey : " + didResult.getVerkey());
 
-                System.out.println(userEmail +"의 Did : "+didResult.getDid());
-                System.out.println(userEmail +"의 key : "+didResult.getVerkey());
 
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         }
 
-        System.out.println("\n\n===Tayo의 지갑 생성 완료===");
+        // TODO : RestTemplate를 빈 설정을 통한 싱글 톤으로 하자!
+        //       url도 주입 방식 사용
+        RestTemplate restTemplate = new RestTemplate();
+        String url = "http://localhost:8081/vc_service/offer";
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, null, String.class);
 
-        //return memberWallet;
+        if (response.getStatusCode().is2xxSuccessful()) {
+            String responseBody = response.getBody();
+            System.out.println(userEmail+"가 요청한 credential Offer : " + responseBody);
+        } else {
+            // 에러 처리 로직 작성
+            System.out.println("도착 정보 x");
+        }
+
+
+
+
+
     }
+
 
 
 

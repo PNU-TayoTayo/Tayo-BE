@@ -6,6 +6,13 @@ import lombok.Setter;
 
 public class MemberRequest {
 
+
+    @Getter
+    @Setter
+    public static class walletPasswordRequest{
+        private String walletPassword;
+    }
+
     @Getter
     @Setter
     public static class DeleteMemberRequest{

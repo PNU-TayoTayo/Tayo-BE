@@ -4,15 +4,17 @@ package pnu.cse.TayoTayo.TayoBE.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.hyperledger.indy.sdk.IndyException;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import pnu.cse.TayoTayo.TayoBE.config.security.CustomUserDetails;
+import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
 import pnu.cse.TayoTayo.TayoBE.dto.response.MemberInfoResponse;
 import pnu.cse.TayoTayo.TayoBE.dto.response.Response;
 import pnu.cse.TayoTayo.TayoBE.model.Member;
+import pnu.cse.TayoTayo.TayoBE.service.CarService;
+
+import java.util.concurrent.ExecutionException;
 
 @Tag(name = "tayo-api", description = "타요타요 API")
 @RestController
@@ -20,6 +22,7 @@ import pnu.cse.TayoTayo.TayoBE.model.Member;
 @RequiredArgsConstructor
 public class CarController {
 
+    private final CarService carService;
 
     @Operation(summary = "본인이 등록한 자동차 조회", description = "본인이 등록한 자동차 조회하는 API입니다.")
     @GetMapping
@@ -36,15 +39,21 @@ public class CarController {
     }
 
     @Operation(summary = "VC 생성하기", description = "VC를 생성하는 API 입니다.")
-    @GetMapping("/vc")
-    public void createVC(Authentication authentication){
+    @PostMapping("/vc")
+    public void createVC(Authentication authentication,@RequestBody MemberRequest.walletPasswordRequest request) throws IndyException, ExecutionException, InterruptedException {
+
+        ((CustomUserDetails) authentication.getPrincipal()).getId();
+
+        carService.createVC(((CustomUserDetails) authentication.getPrincipal()).getId(),
+                request.getWalletPassword());
+
 
         //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
     }
 
 
-    @Operation(summary = "차 등록하기", description = "차 등록하는 API 입니다.")
-    @PostMapping("/vc")
+    @Operation(summary = "vc 조회하기", description = "본인이 가지고 있는 VC 조회하기 API 입니다.")
+    @GetMapping("/vc")
     public void myVC(Authentication authentication){
 
         //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));

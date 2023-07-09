@@ -31,6 +31,16 @@ public class CarController {
         //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
     }
 
+
+    /**
+     * 검증 후 chaincode()
+     *
+     *
+     *
+     *
+     *
+     */
+
     @Operation(summary = "차 등록하기", description = "차 등록하는 API 입니다.")
     @PostMapping
     public void registerCar(Authentication authentication){

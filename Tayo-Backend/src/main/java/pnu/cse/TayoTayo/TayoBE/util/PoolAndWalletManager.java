@@ -5,16 +5,19 @@ import org.hyperledger.indy.sdk.IndyException;
 import org.hyperledger.indy.sdk.did.Did;
 import org.hyperledger.indy.sdk.did.DidResults;
 import org.hyperledger.indy.sdk.ledger.Ledger;
+import org.hyperledger.indy.sdk.ledger.LedgerResults;
 import org.hyperledger.indy.sdk.pool.Pool;
 import org.hyperledger.indy.sdk.wallet.Wallet;
-import org.json.HTTP;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import pnu.cse.TayoTayo.TayoBE.exception.ApplicationException;
+import pnu.cse.TayoTayo.TayoBE.exception.ErrorCode;
+import pnu.cse.TayoTayo.TayoBE.util.indy.indytest;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -154,24 +157,23 @@ public class PoolAndWalletManager {
                 .put("path", "src/main/java/pnu/cse/TayoTayo/TayoBE/wallet/member_wallet")).toString();
     }
 
-    public void getCredentialOfferFromVCService(String userEmail, String walletPassword) throws IndyException, ExecutionException, InterruptedException {
-
+    public Wallet openUserWallet(String userEmail, String walletPassword) throws IndyException, ExecutionException, InterruptedException {
         // 해당 유저의 지갑 오픈
-        Wallet userWallet = Wallet.openWallet(getWalletConfig(userEmail), new JSONObject().put("key", walletPassword).toString()).get();
+        return Wallet.openWallet(getWalletConfig(userEmail), new JSONObject().put("key", walletPassword).toString()).get();
+    }
 
+    public String createCarDID(Wallet userWallet) throws IndyException, ExecutionException, InterruptedException {
         // 자동차에 대한 DID 생성!!
-        if(userWallet != null){
-            try {
-                DidResults.CreateAndStoreMyDidResult didResult = Did.createAndStoreMyDid(userWallet, "{}").get();
 
-                System.out.println("생성한 자동차 DID : " + didResult.getDid());
-                System.out.println("생성한 자동차 DID의 VerKey : " + didResult.getVerkey());
+        DidResults.CreateAndStoreMyDidResult didResult = Did.createAndStoreMyDid(userWallet, "{}").get();
 
+        System.out.println("생성한 자동차 DID : " + didResult.getDid());
+        System.out.println("생성한 자동차 DID의 VerKey : " + didResult.getVerkey());
 
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
+        return didResult.getDid();
+    }
+
+    public String getCredentialOfferFromVCService(Wallet userWallet) throws IndyException, ExecutionException, InterruptedException {
 
         // TODO : RestTemplate를 빈 설정을 통한 싱글 톤으로 하자!
         //       url도 주입 방식 사용
@@ -181,15 +183,42 @@ public class PoolAndWalletManager {
 
         if (response.getStatusCode().is2xxSuccessful()) {
             String responseBody = response.getBody();
-            System.out.println(userEmail+"가 요청한 credential Offer : " + responseBody);
+            return responseBody;
         } else {
             // 에러 처리 로직 작성
             System.out.println("도착 정보 x");
+            throw new ApplicationException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
 
+    }
+
+    public String getVC(String credentialRequestJson, String credentialOffer) {
+
+        RestTemplate restTemplate = new RestTemplate();
+        String url = "http://localhost:8081/vc_service/getVC";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        Map<String, String> request = new HashMap<>();
+        request.put("credentialRequestJson", credentialRequestJson);
+        request.put("credentialOffer", credentialOffer);
+
+        HttpEntity<Map<String, String>> entity = new HttpEntity<>(request, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
 
 
+        if (response.getStatusCode().is2xxSuccessful()) {
+            String responseBody = response.getBody();
+            System.out.println(responseBody);
 
+            return responseBody;
+        } else {
+            // 에러 처리 로직 작성
+            System.out.println("도착 정보 x");
+            throw new ApplicationException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
 
     }
 
@@ -237,5 +266,38 @@ public class PoolAndWalletManager {
         }
         return res;
     }
+
+    public LedgerResults.ParseResponseResult getCredDef(String carDID, String cred_def_id) throws IndyException, ExecutionException, InterruptedException {
+
+        String get_cred_def_request = Ledger.buildGetCredDefRequest(carDID, cred_def_id).get();
+
+        String get_cred_def_response = ensurePreviousRequestApplied(pool, get_cred_def_request, response -> {
+            JSONObject getSchemaResponseObject = new JSONObject(response);
+            return !getSchemaResponseObject.getJSONObject("result").isNull("seqNo");
+        });
+        return Ledger.parseGetCredDefResponse(get_cred_def_response).get();
+    }
+
+    public String ensurePreviousRequestApplied(Pool pool, String checkerRequest, indytest.PoolResponseChecker checker)
+            throws IndyException, ExecutionException, InterruptedException {
+
+        for (int i = 0; i < 3; i++) {
+            String response = Ledger.submitRequest(pool, checkerRequest).get();
+            try {
+                if (checker.check(response)) {
+                    return response;
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                System.err.println(e.toString());
+                System.err.println(response);
+            }
+            Thread.sleep(10000);
+        }
+
+        throw new IllegalStateException();
+    }
+
+
 
 }

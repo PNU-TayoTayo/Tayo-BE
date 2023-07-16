@@ -42,9 +42,10 @@ public class MemberEntity {
 
     private String name;
     private String phoneNumber;
-
     private String nickName;
     private String introduce;
+
+    private String walletMasterKey;
 
 
     private Timestamp registeredAt;
@@ -61,7 +62,7 @@ public class MemberEntity {
     }
 
     @Builder
-    public MemberEntity(Long id, MemberRole role, String email, String password, String name, String phoneNumber, String nickName, String introduce) {
+    public MemberEntity(Long id, MemberRole role, String email, String password, String name, String phoneNumber, String nickName, String introduce,String walletMasterKey) {
         this.id = id;
         this.role = role;
         this.email = email;
@@ -70,6 +71,7 @@ public class MemberEntity {
         this.phoneNumber = phoneNumber;
         this.nickName = nickName;
         this.introduce = introduce;
+        this.walletMasterKey = walletMasterKey;
     }
 
 

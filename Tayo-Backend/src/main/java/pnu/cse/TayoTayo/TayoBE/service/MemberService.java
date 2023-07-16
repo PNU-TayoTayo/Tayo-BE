@@ -2,6 +2,8 @@ package pnu.cse.TayoTayo.TayoBE.service;
 
 import lombok.RequiredArgsConstructor;
 import org.hyperledger.indy.sdk.IndyException;
+import org.hyperledger.indy.sdk.anoncreds.Anoncreds;
+import org.hyperledger.indy.sdk.wallet.Wallet;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -42,27 +44,33 @@ public class MemberService {
         validateDuplicateMember(request.getEmail()); // 중복 회원 검증
 
         // 2. 검증 통과하면 DB 저장
-        MemberEntity newMember = MemberEntity.builder()
-                .role(MemberRole.USER)
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .name(request.getName())
-                .phoneNumber(request.getPhoneNumber())
-                .nickName(request.getNickName())
-                .introduce(request.getIntroduce())
-                .build();
 
         //  3. Indy 지갑 생성까지 !!
         try{
             // TODO : 여기서 생성되는 DID랑 verKey를 DB에 저장해야할까...?
-            poolAndWalletManager.createMemberWallet(request.getEmail(), "tempWalletPassword");
+            Wallet memberWallet = poolAndWalletManager.createMemberWallet(request.getEmail(), "tempWalletPassword");
+            String MasterSecretId = Anoncreds.proverCreateMasterSecret(memberWallet, null).get();
+
+            MemberEntity newMember = MemberEntity.builder()
+                    .role(MemberRole.USER)
+                    .email(request.getEmail())
+                    .password(passwordEncoder.encode(request.getPassword()))
+                    .name(request.getName())
+                    .phoneNumber(request.getPhoneNumber())
+                    .nickName(request.getNickName())
+                    .introduce(request.getIntroduce())
+                    .walletMasterKey(MasterSecretId)
+                    .build();
+
             memberRepository.save(newMember);
+
+            return Member.fromEntity(newMember);
 
         }catch (Exception e){
             e.printStackTrace();
         }
 
-        return Member.fromEntity(newMember);
+        return null; // TODO : 나중에 수정
     }
 
     /**
@@ -77,6 +85,7 @@ public class MemberService {
                 = new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword());
         Authentication authentication = authenticationManager.authenticate(usernamePasswordAuthenticationToken);
         CustomUserDetails myUserDetails = (CustomUserDetails) authentication.getPrincipal();
+
         String jwt = JWTProvider.createAccessToken(myUserDetails.getMember());
 
 

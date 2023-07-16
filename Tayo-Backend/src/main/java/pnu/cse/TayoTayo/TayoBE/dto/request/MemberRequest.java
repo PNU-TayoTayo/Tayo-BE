@@ -6,6 +6,11 @@ import lombok.Setter;
 
 public class MemberRequest {
 
+    @Getter
+    @Setter
+    public static class getMyVCRequest{
+        private String walletPassword;
+    }
 
     @Getter
     @Setter

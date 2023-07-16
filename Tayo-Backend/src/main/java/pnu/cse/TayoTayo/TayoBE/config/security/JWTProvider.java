@@ -18,6 +18,7 @@ public class JWTProvider {
     public static final String SECRET = "TayoKey";
 
     public static String createAccessToken(MemberEntity member) {
+        // 토큰은 데이터 담을 수 있음 (민감한 정보는 넣으면 x)
         String jwt = JWT.create()
                 .withSubject(member.getEmail()) // jwt의 이름 설정
                 .withExpiresAt(new Date(System.currentTimeMillis() + EXP))

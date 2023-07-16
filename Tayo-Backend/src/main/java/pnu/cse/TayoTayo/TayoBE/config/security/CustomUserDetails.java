@@ -18,7 +18,6 @@ public class CustomUserDetails implements UserDetails {
 
     private final MemberEntity member;
 
-    // TODO : 이게 뭘까?
 //    @Override
 //    public Collection<? extends GrantedAuthority> getAuthorities() {
 //        return Arrays.stream(member.getRole().toString().split(",")).map(SimpleGrantedAuthority::new).collect(Collectors.toList());

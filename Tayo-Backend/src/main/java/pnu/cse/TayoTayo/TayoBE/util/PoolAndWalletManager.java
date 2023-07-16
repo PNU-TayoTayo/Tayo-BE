@@ -1,13 +1,17 @@
 package pnu.cse.TayoTayo.TayoBE.util;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.hyperledger.indy.sdk.IndyException;
+import org.hyperledger.indy.sdk.anoncreds.Anoncreds;
+import org.hyperledger.indy.sdk.anoncreds.CredentialsSearchForProofReq;
 import org.hyperledger.indy.sdk.did.Did;
 import org.hyperledger.indy.sdk.did.DidResults;
 import org.hyperledger.indy.sdk.ledger.Ledger;
 import org.hyperledger.indy.sdk.ledger.LedgerResults;
 import org.hyperledger.indy.sdk.pool.Pool;
 import org.hyperledger.indy.sdk.wallet.Wallet;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -21,7 +25,10 @@ import pnu.cse.TayoTayo.TayoBE.util.indy.indytest;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -41,6 +48,8 @@ public class PoolAndWalletManager {
     private final Wallet TayoWallet;
 
     private Map<String, Object> steward = new HashMap<>();
+
+    @Getter
     private Map<String, Object> Tayo = new HashMap<>();
 
 
@@ -142,14 +151,16 @@ public class PoolAndWalletManager {
         return TaWallet;
     }
 
-    public void createMemberWallet(String userEmail, String walletPassword) throws IndyException, ExecutionException, InterruptedException {
+    public Wallet createMemberWallet(String userEmail, String walletPassword) throws IndyException, ExecutionException, InterruptedException {
 
         System.out.println("\n\n=== 회원가입시 Tayo 서비스 유저의 지갑 생성 시작===");
         Wallet.createWallet(getWalletConfig(userEmail), new JSONObject().put("key",walletPassword).toString()).get();
         Wallet memberWallet = Wallet.openWallet(getWalletConfig(userEmail), new JSONObject().put("key",walletPassword).toString()).get();
 
         System.out.println("\n\n==="+userEmail+"의 지갑 생성 완료===");
-        memberWallet.closeWallet().get();
+//        memberWallet.closeWallet().get();
+
+        return memberWallet;
     }
 
     public static String getWalletConfig(String userEmail){
@@ -157,9 +168,15 @@ public class PoolAndWalletManager {
                 .put("path", "src/main/java/pnu/cse/TayoTayo/TayoBE/wallet/member_wallet")).toString();
     }
 
+
     public Wallet openUserWallet(String userEmail, String walletPassword) throws IndyException, ExecutionException, InterruptedException {
         // 해당 유저의 지갑 오픈
         return Wallet.openWallet(getWalletConfig(userEmail), new JSONObject().put("key", walletPassword).toString()).get();
+    }
+
+    public void closeUserWallet(Wallet userWallet) throws IndyException{
+        // 해당 유저의 지갑 오픈
+        userWallet.closeWallet();
     }
 
     public String createCarDID(Wallet userWallet) throws IndyException, ExecutionException, InterruptedException {
@@ -173,7 +190,7 @@ public class PoolAndWalletManager {
         return didResult.getDid();
     }
 
-    public String getCredentialOfferFromVCService(Wallet userWallet) throws IndyException, ExecutionException, InterruptedException {
+    public String getCredentialOfferFromVCService(Long userId, Wallet userWallet) throws IndyException, ExecutionException, InterruptedException {
 
         // TODO : RestTemplate를 빈 설정을 통한 싱글 톤으로 하자!
         //       url도 주입 방식 사용
@@ -183,6 +200,10 @@ public class PoolAndWalletManager {
 
         if (response.getStatusCode().is2xxSuccessful()) {
             String responseBody = response.getBody();
+
+            Tayo.put(userId+"_offer",responseBody);
+
+
             return responseBody;
         } else {
             // 에러 처리 로직 작성
@@ -222,10 +243,127 @@ public class PoolAndWalletManager {
 
     }
 
+    public String getProofRequest(Long memberId) throws IndyException, ExecutionException, InterruptedException {
+
+        String nonce = Anoncreds.generateNonce().get();
+        JSONArray transcriptRestrictions =new JSONArray().put(
+                new JSONObject().put("cred_def_id",
+                        new JSONObject(Tayo.get(memberId + "_offer")).getString("cred_def_id") ));
+
+        // 이게 해당 유저가 작성해야하는 VP form임 !!! (즉 요청이 들어오면 이걸 생성해야함...)
+        String proofRequestJson = new JSONObject()
+                .put("nonce", nonce) //재생 공격을 완화하고 SSI 생태계에서 검증자와 보유자 간의 통신의 신선함과 진정성을 보장하여 추가 보안 계층을 추가하는 것
+                .put("name", "Register-Car")
+                .put("version", "0.1")
+                .put("requested_attributes", new JSONObject()
+                        .put("attr1_referent", new JSONObject().put("name", "owner_first_name"))
+                        .put("attr2_referent", new JSONObject().put("name", "owner_last_name"))
+                        .put("attr3_referent", new JSONObject().put("name", "car_number").put("restrictions", transcriptRestrictions))
+                        .put("attr4_referent", new JSONObject().put("name", "car_model").put("restrictions", transcriptRestrictions)))
+                .put("requested_predicates", new JSONObject()
+                        // 주행 거리 200,000km 이하
+                        .put("predicate1_referent", new JSONObject()
+                                .put("name", "driving_record")
+                                .put("p_type", "<=")
+                                .put("p_value", 200000)
+                                .put("restrictions", transcriptRestrictions))
+                        // 출고 이후 15년 미만
+                        .put("predicate2_referent", new JSONObject()
+                                .put("name", "car_delivery_date")
+                                .put("p_type", "<=")
+                                .put("p_value", LocalDate.now().minusYears(15).toString())
+                                .put("restrictions", transcriptRestrictions))
+                        // 정기 검사 기간 6개월 이내 (검사 결과 모두 적합!)
+                        .put("predicate3_referent", new JSONObject()
+                                .put("name", "inspection_record")
+                                .put("p_type", "<=")
+                                .put("p_value", LocalDate.now().minusYears(15).toString())
+                                .put("restrictions", transcriptRestrictions))
+                )
+                .toString();
+
+        return proofRequestJson;
+    }
+
+    public String createVP(String proofRequestJson, Wallet memberWallet , String masterKey) throws Exception {
+
+        // TODO : 해당 member Wallet에 자동차에 대한 VC가 여러가지가 있으면 뭘 가져오는거지?
+        CredentialsSearchForProofReq search_for_job_application_proof_request = CredentialsSearchForProofReq.open(
+                memberWallet, proofRequestJson, null).get();
+
+        // TODO : VP 채우기 위해 VC 에서 뽑는 과정 ??
+        JSONArray credentialsForAttribute3 = new JSONArray(search_for_job_application_proof_request.fetchNextCredentials("attr3_referent", 100).get());
+        String credentialIdForAttribute3 = credentialsForAttribute3.getJSONObject(0).getJSONObject("cred_info").getString("referent");
+
+        JSONArray credentialsForAttribute4 = new JSONArray(search_for_job_application_proof_request.fetchNextCredentials("attr4_referent", 100).get());
+        String credentialIdForAttribute4 = credentialsForAttribute4.getJSONObject(0).getJSONObject("cred_info").getString("referent");
+
+        JSONArray credentialsForPredicate1 = new JSONArray(search_for_job_application_proof_request.fetchNextCredentials("predicate1_referent", 100).get());
+        String credentialIdForPredicate1 = credentialsForPredicate1.getJSONObject(0).getJSONObject("cred_info").getString("referent");
+
+        JSONArray credentialsForPredicate2 = new JSONArray(search_for_job_application_proof_request.fetchNextCredentials("predicate2_referent", 100).get());
+        String credentialIdForPredicate2 = credentialsForPredicate2.getJSONObject(0).getJSONObject("cred_info").getString("referent");
+
+        JSONArray credentialsForPredicate3 = new JSONArray(search_for_job_application_proof_request.fetchNextCredentials("predicate3_referent", 100).get());
+        String credentialIdForPredicate3 = credentialsForPredicate3.getJSONObject(0).getJSONObject("cred_info").getString("referent");
+
+        search_for_job_application_proof_request.close();
+
+        String credentialsJson = new JSONObject()
+                .put("self_attested_attributes", new JSONObject()
+                        .put("attr1_referent", "Alice")
+                        .put("attr2_referent", "Garcia"))
+                // requested_attributes는 VC에서 뽑은 데이터
+                .put("requested_attributes", new JSONObject()
+                        .put("attr3_referent", new JSONObject()
+                                .put("cred_id", credentialIdForAttribute3)
+                                .put("revealed", true))
+                        .put("attr4_referent", new JSONObject()
+                                .put("cred_id", credentialIdForAttribute4)
+                                .put("revealed", true)))
+                // requested_predicates 이거는 영지식 증명들
+                .put("requested_predicates", new JSONObject()
+                        .put("predicate1_referent", new JSONObject()
+                                .put("cred_id",credentialIdForPredicate1))
+                        .put("predicate2_referent", new JSONObject()
+                                .put("cred_id",credentialIdForPredicate2))
+                        .put("predicate3_referent", new JSONObject()
+                                .put("cred_id",credentialIdForPredicate3))
+                )
+                .toString();
+
+        //VP 생성을 위한 추가 정보들 ..?
+        JSONObject schemasMap = new JSONObject();
+        JSONObject credDefsMap = new JSONObject();
+
+//        populateCredentialInfo(pool, Alice.get("did").toString(), schemasMap, credDefsMap, credentialsForAttribute3);
+//        populateCredentialInfo(pool, Alice.get("did").toString(), schemasMap, credDefsMap, credentialsForAttribute4);
+//        populateCredentialInfo(pool, Alice.get("did").toString(), schemasMap, credDefsMap, credentialsForAttribute5);
+//        populateCredentialInfo(pool, Alice.get("did").toString(), schemasMap, credDefsMap, credentialsForAttribute6);
+
+        String schemas = schemasMap.toString();
+        String credDefs = credDefsMap.toString();
+        String revocState = new JSONObject().toString();
+
+        // 최종 제출할 VP
+        String proofJson = Anoncreds.proverCreateProof(
+                memberWallet
+                ,proofRequestJson // proofRequestJson
+                ,credentialsJson // credentialsJson
+                ,masterKey  // 이건 어디서 들고오지...? (VC의 Master Key를 어디다 저장해야 할까?)
+                ,schemas
+                ,credDefs
+                ,revocState).get();
+
+        return proofJson;
+
+
+    }
 
 
 
-    @PostConstruct
+
+        @PostConstruct
     public void init() throws IndyException, ExecutionException, InterruptedException {
 
         System.out.println("\n steward의 DID : "+Did.getListMyDidsWithMeta(stewardWallet).get());
@@ -245,17 +383,18 @@ public class PoolAndWalletManager {
 //        Pool.deletePoolLedgerConfig("TayoTayoPool").get();
     }
 
-    public static void closeAndDeleteWallet(Wallet wallet, String config, String key) throws Exception {
+    public void closeAndDeleteWallet(Wallet wallet, String config, String key) throws Exception {
         if (wallet != null) {
             wallet.closeWallet().get();
             Wallet.deleteWallet(config, key).get();
         }
     }
-    private static String signAndSubmitRequest(Pool pool, Wallet endorserWallet, String endorserDid, String request) throws Exception {
+
+    private String signAndSubmitRequest(Pool pool, Wallet endorserWallet, String endorserDid, String request) throws Exception {
         return submitRequest(pool, Ledger.signRequest(endorserWallet, endorserDid, request).get());
     }
 
-    private static String submitRequest(Pool pool, String req) throws Exception {
+    private String submitRequest(Pool pool, String req) throws Exception {
         String res = Ledger.submitRequest(pool, req).get();
         if ("REPLY".equals(new JSONObject(res).get("op"))) {
             log.info("SubmitRequest: " + req);
@@ -296,6 +435,36 @@ public class PoolAndWalletManager {
         }
 
         throw new IllegalStateException();
+    }
+
+    public void populateCredentialInfo(Pool pool, String did, JSONObject schemas, JSONObject credDefs, JSONArray credentials) throws Exception {
+        for (JSONObject o : array2List(credentials)) {
+            JSONObject credInfo = o.getJSONObject("cred_info");
+            String schemaId = credInfo.getString("schema_id");
+            String credDefId = credInfo.getString("cred_def_id");
+
+            if (schemas.isNull(schemaId)) {
+                String getSchemaRequest = Ledger.buildGetSchemaRequest(did, schemaId).get();
+                String getSchemaResponse = Ledger.submitRequest(pool, getSchemaRequest).get();
+                LedgerResults.ParseResponseResult parseSchemaResult = Ledger.parseGetSchemaResponse(getSchemaResponse).get();
+                String schemaJson = parseSchemaResult.getObjectJson();
+                schemas.put(schemaId, new JSONObject(schemaJson));
+            }
+            if (credDefs.isNull(credDefId)) {
+                String getCredDefRequest = Ledger.buildGetCredDefRequest(did, credDefId).get();
+                String getCredDefResponse = Ledger.submitRequest(pool, getCredDefRequest).get();
+                LedgerResults.ParseResponseResult parseCredDefResponse = Ledger.parseGetCredDefResponse(getCredDefResponse).get();
+
+                String credDefJson = parseCredDefResponse.getObjectJson();
+                credDefs.put(credDefId, new JSONObject(credDefJson));
+            }
+        }
+    }
+
+    public List<JSONObject> array2List(JSONArray credentials) {
+        List<JSONObject> result = new ArrayList<>();
+        credentials.forEach(o -> result.add((JSONObject) o));
+        return result;
     }
 
 

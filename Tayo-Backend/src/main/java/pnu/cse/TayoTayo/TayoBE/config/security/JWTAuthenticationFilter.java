@@ -42,6 +42,8 @@ public class JWTAuthenticationFilter extends BasicAuthenticationFilter {
             Long id = decodedJWT.getClaim("id").asLong();
             String role = decodedJWT.getClaim("role").asString();
 
+            // 여기서 강제로 시큐리티 세션에 잠시 넣기 위해 member -> UserDetail -> Authentication 과정 필요
+
             MemberEntity member = MemberEntity.builder().id(id).role(MemberRole.valueOf(role)).build();
 
             CustomUserDetails myUserDetails = new CustomUserDetails(member);

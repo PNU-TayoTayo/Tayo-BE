@@ -41,6 +41,11 @@ public class MemberController {
         return Response.success("회원가입 성공", MemberResponse.fromMember(member));
     }
 
+    /**
+     *
+     * 로그인 API
+     *
+     */
 
     @Operation(summary = "타요타요 서비스 로그인", description = "해당 API를 사용해서 타요타요 서비스 로그인이 가능합니다")
     //@Parameter(name = "str", description = "2번 반복할 문자열")
@@ -49,6 +54,7 @@ public class MemberController {
 
         Member member = memberService.login(request);
         System.out.println(member.getJwt());
+
         return ResponseEntity.ok().header(JWTProvider.HEADER, member.getJwt())
                 .body(Response.success("로그인 성공",MemberResponse.fromMember(member)));
     }

@@ -8,6 +8,14 @@ public class MemberRequest {
 
     @Getter
     @Setter
+    public static class registerCarRequest{
+        private String walletPassword;
+        private String referentVC;
+        // TODO : 요금, 위치 등등 추가 정보
+    }
+
+    @Getter
+    @Setter
     public static class getMyVCRequest{
         private String walletPassword;
     }

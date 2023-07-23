@@ -64,6 +64,8 @@ public class MemberService {
 
             memberRepository.save(newMember);
 
+            poolAndWalletManager.closeUserWallet(memberWallet);
+
             return Member.fromEntity(newMember);
 
         }catch (Exception e){

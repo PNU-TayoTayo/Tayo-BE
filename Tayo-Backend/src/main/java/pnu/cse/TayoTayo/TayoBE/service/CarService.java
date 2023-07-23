@@ -20,6 +20,7 @@ import pnu.cse.TayoTayo.TayoBE.repository.MemberRepository;
 import pnu.cse.TayoTayo.TayoBE.util.PoolAndWalletManager;
 
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 
@@ -49,7 +50,6 @@ public class CarService {
      * 7. 만든 Credential Request를 VC_Service에 제출해서 VC 발급 요청을 함 + (자동차 번호등도 보내야 할듯)
      */
 
-    // 트랜잭션을 너무 오래 잡고있긴 하는듯..
     @Transactional
     public void createVC(Long Id , String walletPassword) throws IndyException, ExecutionException, InterruptedException {
 
@@ -57,9 +57,8 @@ public class CarService {
 
         Wallet memberWallet = poolAndWalletManager.openUserWallet(member.getEmail(), walletPassword);
 
-        String carDID = poolAndWalletManager.createCarDID(memberWallet);
+        String carDID = poolAndWalletManager.createCarDID(memberWallet,member);
 
-        // TODO : offer 재사용이 필요할듯..??
         String credentialOffer = poolAndWalletManager.getCredentialOfferFromVCService(member.getId(),memberWallet);
 
         System.out.println("\n해당 유저가 VC 생성에 필요한 Master Secret을 생성하고 본인의 지갑에 저장");
@@ -97,10 +96,13 @@ public class CarService {
         Wallet memberWallet = poolAndWalletManager.openUserWallet(member.getEmail(), walletPassword);
 
         JSONObject json = new JSONObject();
-        String filter = json.put("issuer_did", "Q6v4qhUyqWGHNw2QQT4Mms").toString();
 
+        String filter = json.put("issuer_did", "FRHUK728gcnv3VM3GwCwQR").toString();
+
+        // 발급자의 did로 뽑아냄 VC를 뽑아냄..?
         String credentials = Anoncreds.proverGetCredentials(memberWallet, filter).get();
 
+        // TODO : 유저에게 어떤식으로 제공할 건가.... 이걸 토대로 요청 누르면 등록되는 방식이기 때문에 중요!!
         System.out.println("\n\ndid : "+Did.getListMyDidsWithMeta(memberWallet).get());
         System.out.println(credentials);
 
@@ -110,28 +112,18 @@ public class CarService {
 
     /**
      *
-     * 차량 등록 요청시 지갑에서 VC들을 VP로 만들어서
-     * 제출하고 서비스에서 검증한 후 검증한 자동차 데이터 등록!
+     * 사용자에게 현재 가지고 있는 VC들을 보여줌 (선택권 부여)
      *
-     * 1. VP검증 + 자동차 등록을 한번에??
+     *  VC마다 referent를 가지고 있다!!
      *
-     * 2. 자동차에 대한 검증이 완료되었습니다. -> 자동차 정보 추가로? 흠...
-     *
-     * <순서>
-     *
-     *     1. 요청 들어오면 타요타요 서버에서 nonce, cred_def_id(모든 유저가 동일할텐데 ..) 로
-     *          proofRequestJson을 만들어서
-     *
-     *     2.
-     *
-     *
-     *     3.
-     *
+     * 사용자가 VC 목록에서 원하는 VC를 선택하면, 해당 VC의 식별자(referent)를 애플리케이션으로 전달
+     * 전달받은 VC 식별자를 사용하여 선택된 VC를 검색하고, 해당 VC를 포함한 VP를 생성
+     * 생성된 VP를 검증 요청자(Verifier)에게 제출하여 자격을 증명
      *
      */
 
     @Transactional
-    public void postCar(Long memberId , String walletPassword) throws Exception {
+    public void postCar(Long memberId , String walletPassword , String referentVC) throws Exception {
 
         System.out.println("자동차 등록을 위한 VP 생성");
 
@@ -141,17 +133,25 @@ public class CarService {
 
         String proofRequestJson = poolAndWalletManager.getProofRequest(memberId);
 
-        String vp = poolAndWalletManager.createVP(proofRequestJson, memberWallet, member.getWalletMasterKey());
+        //poolAndWalletManager.createVP(proofRequestJson, memberWallet, member.getWalletMasterKey(), member.getName(), referentVC);
 
-        // TODO : 마지막으로 vp 검증하고 검증 결과에 따라 차 등록!!!
+        Map<String, String> vp = poolAndWalletManager.createVP(proofRequestJson, memberWallet, member.getWalletMasterKey(), member.getName(), referentVC, memberId);
 
+        //boolean res = poolAndWalletManager.verifyVP(proofRequestJson, vp);
+//
+//        // 여기서 request
+//        if(res){ // 일치시
+//            // TODO : 받은 데이터들로 자동차 등록 chainCode 실행
+//            //      흠... VP 검증과 자동차 등록을 분리할까..
+//            System.out.println("일치!!!");
+//
+//        }else{
+//            // TODO : 검증안되면 Exception 던지기
+//            System.out.println("불일치 !!");
+//
+//        }
 
-
-
-
-
-
-
+        poolAndWalletManager.closeUserWallet(memberWallet);
 
     }
 

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import pnu.cse.TayoTayo.TayoBE.exception.ApplicationException;
 import pnu.cse.TayoTayo.TayoBE.exception.ErrorCode;
+import pnu.cse.TayoTayo.TayoBE.model.entity.MemberEntity;
 import pnu.cse.TayoTayo.TayoBE.util.indy.indytest;
 
 import javax.annotation.PostConstruct;
@@ -179,10 +180,12 @@ public class PoolAndWalletManager {
         userWallet.closeWallet();
     }
 
-    public String createCarDID(Wallet userWallet) throws IndyException, ExecutionException, InterruptedException {
+    public String createCarDID(Wallet userWallet, MemberEntity member) throws IndyException, ExecutionException, InterruptedException {
         // 자동차에 대한 DID 생성!!
 
         DidResults.CreateAndStoreMyDidResult didResult = Did.createAndStoreMyDid(userWallet, "{}").get();
+
+        Tayo.put(member.getId()+"_did",didResult.getDid());
 
         System.out.println("생성한 자동차 DID : " + didResult.getDid());
         System.out.println("생성한 자동차 DID의 VerKey : " + didResult.getVerkey());
@@ -248,11 +251,11 @@ public class PoolAndWalletManager {
         String nonce = Anoncreds.generateNonce().get();
         JSONArray transcriptRestrictions =new JSONArray().put(
                 new JSONObject().put("cred_def_id",
-                        new JSONObject(Tayo.get(memberId + "_offer")).getString("cred_def_id") ));
+                        new JSONObject(Tayo.get(memberId + "_offer").toString()).getString("cred_def_id") ));
 
         // 이게 해당 유저가 작성해야하는 VP form임 !!! (즉 요청이 들어오면 이걸 생성해야함...)
         String proofRequestJson = new JSONObject()
-                .put("nonce", nonce) //재생 공격을 완화하고 SSI 생태계에서 검증자와 보유자 간의 통신의 신선함과 진정성을 보장하여 추가 보안 계층을 추가하는 것
+                .put("nonce", nonce)
                 .put("name", "Register-Car")
                 .put("version", "0.1")
                 .put("requested_attributes", new JSONObject()
@@ -261,101 +264,158 @@ public class PoolAndWalletManager {
                         .put("attr3_referent", new JSONObject().put("name", "car_number").put("restrictions", transcriptRestrictions))
                         .put("attr4_referent", new JSONObject().put("name", "car_model").put("restrictions", transcriptRestrictions)))
                 .put("requested_predicates", new JSONObject()
-                        // 주행 거리 200,000km 이하
                         .put("predicate1_referent", new JSONObject()
                                 .put("name", "driving_record")
-                                .put("p_type", "<=")
-                                .put("p_value", 200000)
+                                .put("p_type", ">=")
+                                .put("p_value", 4) // 주행 거리 200,000km 이하
                                 .put("restrictions", transcriptRestrictions))
-                        // 출고 이후 15년 미만
-                        .put("predicate2_referent", new JSONObject()
-                                .put("name", "car_delivery_date")
-                                .put("p_type", "<=")
-                                .put("p_value", LocalDate.now().minusYears(15).toString())
-                                .put("restrictions", transcriptRestrictions))
-                        // 정기 검사 기간 6개월 이내 (검사 결과 모두 적합!)
-                        .put("predicate3_referent", new JSONObject()
-                                .put("name", "inspection_record")
-                                .put("p_type", "<=")
-                                .put("p_value", LocalDate.now().minusYears(15).toString())
-                                .put("restrictions", transcriptRestrictions))
+//                        // 출고 이후 15년 미만
+//                        .put("predicate2_referent", new JSONObject()
+//                                .put("name", "car_delivery_date")
+//                                .put("p_type", "<=")
+//                                .put("p_value", LocalDate.now().minusYears(15).toString())
+//                                .put("restrictions", transcriptRestrictions))
+//                        // 정기 검사 기간 6개월 이내 (검사 결과 모두 적합!)
+//                        .put("predicate3_referent", new JSONObject()
+//                                .put("name", "inspection_record")
+//                                .put("p_type", "<=")
+//                                .put("p_value", LocalDate.now().minusMonths(6).toString())
+//                                .put("restrictions", transcriptRestrictions))
                 )
                 .toString();
 
         return proofRequestJson;
     }
 
-    public String createVP(String proofRequestJson, Wallet memberWallet , String masterKey) throws Exception {
+    public Map<String, String> createVP(String proofRequestJson, Wallet memberWallet , String masterKey, String memberName ,String referentVC, Long memberId) throws Exception {
 
         // TODO : 해당 member Wallet에 자동차에 대한 VC가 여러가지가 있으면 뭘 가져오는거지?
-        CredentialsSearchForProofReq search_for_job_application_proof_request = CredentialsSearchForProofReq.open(
+        //          즉. proofRequestJson이 VP 구조인데 이걸 채우는거지
+        //
+
+        CredentialsSearchForProofReq proofRequest = CredentialsSearchForProofReq.open(
                 memberWallet, proofRequestJson, null).get();
 
+
         // TODO : VP 채우기 위해 VC 에서 뽑는 과정 ??
-        JSONArray credentialsForAttribute3 = new JSONArray(search_for_job_application_proof_request.fetchNextCredentials("attr3_referent", 100).get());
+        JSONArray credentialsForAttribute3 = new JSONArray(proofRequest.fetchNextCredentials("attr3_referent", 100).get());
         String credentialIdForAttribute3 = credentialsForAttribute3.getJSONObject(0).getJSONObject("cred_info").getString("referent");
 
-        JSONArray credentialsForAttribute4 = new JSONArray(search_for_job_application_proof_request.fetchNextCredentials("attr4_referent", 100).get());
+        System.out.println("\n\n 여기부터 !!!! : "+credentialsForAttribute3.toString());
+        System.out.println(credentialIdForAttribute3);
+
+        JSONArray credentialsForAttribute4 = new JSONArray(proofRequest.fetchNextCredentials("attr4_referent", 100).get());
         String credentialIdForAttribute4 = credentialsForAttribute4.getJSONObject(0).getJSONObject("cred_info").getString("referent");
 
-        JSONArray credentialsForPredicate1 = new JSONArray(search_for_job_application_proof_request.fetchNextCredentials("predicate1_referent", 100).get());
+        System.out.println(credentialsForAttribute4.toString());
+        System.out.println(credentialIdForAttribute4);
+
+        System.out.println("여기 에러 !");
+
+        JSONArray credentialsForPredicate1 = new JSONArray(proofRequest.fetchNextCredentials("predicate1_referent", 100).get());
+        System.out.println("여기 에러 !");
         String credentialIdForPredicate1 = credentialsForPredicate1.getJSONObject(0).getJSONObject("cred_info").getString("referent");
 
-        JSONArray credentialsForPredicate2 = new JSONArray(search_for_job_application_proof_request.fetchNextCredentials("predicate2_referent", 100).get());
-        String credentialIdForPredicate2 = credentialsForPredicate2.getJSONObject(0).getJSONObject("cred_info").getString("referent");
+        System.out.println(credentialsForPredicate1.toString());
+        System.out.println(credentialIdForPredicate1);
 
-        JSONArray credentialsForPredicate3 = new JSONArray(search_for_job_application_proof_request.fetchNextCredentials("predicate3_referent", 100).get());
-        String credentialIdForPredicate3 = credentialsForPredicate3.getJSONObject(0).getJSONObject("cred_info").getString("referent");
-
-        search_for_job_application_proof_request.close();
-
+//        JSONArray credentialsForPredicate2 = new JSONArray(proofRequest.fetchNextCredentials("predicate2_referent", 100).get());
+//        String credentialIdForPredicate2 = credentialsForPredicate2.getJSONObject(0).getJSONObject("cred_info").getString("referent");
+//
+//        JSONArray credentialsForPredicate3 = new JSONArray(proofRequest.fetchNextCredentials("predicate3_referent", 100).get());
+//        String credentialIdForPredicate3 = credentialsForPredicate3.getJSONObject(0).getJSONObject("cred_info").getString("referent");
+//
+        proofRequest.close();
+//
+        // 이게 제출할 vp
         String credentialsJson = new JSONObject()
                 .put("self_attested_attributes", new JSONObject()
-                        .put("attr1_referent", "Alice")
-                        .put("attr2_referent", "Garcia"))
+                        .put("attr1_referent","kim" ) // TODO : 수정
+                        .put("attr2_referent", "donwoo"))
                 // requested_attributes는 VC에서 뽑은 데이터
                 .put("requested_attributes", new JSONObject()
                         .put("attr3_referent", new JSONObject()
-                                .put("cred_id", credentialIdForAttribute3)
+                                .put("cred_id", referentVC)
                                 .put("revealed", true))
                         .put("attr4_referent", new JSONObject()
-                                .put("cred_id", credentialIdForAttribute4)
+                                .put("cred_id", referentVC)
                                 .put("revealed", true)))
                 // requested_predicates 이거는 영지식 증명들
-                .put("requested_predicates", new JSONObject()
-                        .put("predicate1_referent", new JSONObject()
-                                .put("cred_id",credentialIdForPredicate1))
-                        .put("predicate2_referent", new JSONObject()
-                                .put("cred_id",credentialIdForPredicate2))
-                        .put("predicate3_referent", new JSONObject()
-                                .put("cred_id",credentialIdForPredicate3))
-                )
+//                .put("requested_predicates", new JSONObject()
+//                        .put("predicate1_referent", new JSONObject()
+//                                .put("cred_id",referentVC)))
+//                        .put("predicate2_referent", new JSONObject()
+//                                .put("cred_id",credentialIdForPredicate2))
+//                        .put("predicate3_referent", new JSONObject()
+//                                .put("cred_id",credentialIdForPredicate3))
+//                )
                 .toString();
 
-        //VP 생성을 위한 추가 정보들 ..?
+        System.out.println("\n\ncredentialsJson : "+credentialsJson);
+
+        // ProofRequest 생성하기 위해
         JSONObject schemasMap = new JSONObject();
         JSONObject credDefsMap = new JSONObject();
+//
+//        // TODO : 여기서 해당 차량의 DID를 넣으면 되려나?? VC value에 DID값을 넣을까?
 
-//        populateCredentialInfo(pool, Alice.get("did").toString(), schemasMap, credDefsMap, credentialsForAttribute3);
-//        populateCredentialInfo(pool, Alice.get("did").toString(), schemasMap, credDefsMap, credentialsForAttribute4);
-//        populateCredentialInfo(pool, Alice.get("did").toString(), schemasMap, credDefsMap, credentialsForAttribute5);
-//        populateCredentialInfo(pool, Alice.get("did").toString(), schemasMap, credDefsMap, credentialsForAttribute6);
+        populateCredentialInfo(pool, Tayo.get(memberId+"_did").toString(), schemasMap, credDefsMap, credentialsForAttribute3);
+        populateCredentialInfo(pool, Tayo.get(memberId+"_did").toString(), schemasMap, credDefsMap, credentialsForAttribute4);
+
+        Map<String, String> temp = new HashMap<>();
 
         String schemas = schemasMap.toString();
         String credDefs = credDefsMap.toString();
         String revocState = new JSONObject().toString();
+
+        System.out.println("schemas : " + schemas);
+        System.out.println("credDefs : " + credDefs);
 
         // 최종 제출할 VP
         String proofJson = Anoncreds.proverCreateProof(
                 memberWallet
                 ,proofRequestJson // proofRequestJson
                 ,credentialsJson // credentialsJson
-                ,masterKey  // 이건 어디서 들고오지...? (VC의 Master Key를 어디다 저장해야 할까?)
+                ,masterKey
                 ,schemas
                 ,credDefs
                 ,revocState).get();
 
-        return proofJson;
+        temp.put("schemas" , schemas);
+        temp.put("credDefs" , credDefs);
+        temp.put("proofJson" , proofJson);
+
+
+        return temp;
+    }
+
+    public boolean verifyVP(String proofRequestJson, Map<String, String> vpMap) throws IndyException, ExecutionException, InterruptedException {
+
+        System.out.println("\n\nvp의 schemas : " + vpMap.get("schemas"));
+        System.out.println("vp의 credDefs : " + vpMap.get("credDefs"));
+        System.out.println("vp의 proofJson : " + vpMap.get("proofJson"));
+
+        String vp = vpMap.get("proofJson");
+
+        System.out.println("\n\n 타요타요 유저의 vp를 검증하는 단계!!");
+
+        JSONObject selfAttestedAttrs = new JSONObject(vp).getJSONObject("requested_proof").getJSONObject("self_attested_attrs");
+        JSONObject revealedAttrs = new JSONObject(vp).getJSONObject("requested_proof").getJSONObject("revealed_attrs");
+        System.out.println("SelfAttestedAttrs: " + selfAttestedAttrs);
+        System.out.println("RevealedAttrs: " + revealedAttrs);
+
+        String revocRegDefs = new JSONObject().toString();
+        String revocRegs = new JSONObject().toString();
+
+        // 검증 과정
+        Boolean same = Anoncreds.verifierVerifyProof(
+                proofRequestJson,
+                vp,
+                vpMap.get("schemas"),
+                vpMap.get("credDefs"),
+                revocRegDefs, revocRegs).get();
+
+        return same;
 
 
     }

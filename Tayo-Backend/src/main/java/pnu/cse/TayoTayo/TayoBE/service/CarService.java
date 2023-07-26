@@ -51,7 +51,7 @@ public class CarService {
      */
 
     @Transactional
-    public void createVC(Long Id , String walletPassword) throws IndyException, ExecutionException, InterruptedException {
+    public void createVC(Long Id , String walletPassword, String carNumber) throws IndyException, ExecutionException, InterruptedException {
 
         MemberEntity member = memberRepository.findOne(Id);
 
@@ -77,7 +77,7 @@ public class CarService {
                         parsedCredDefResponse.getObjectJson(), MasterSecretId).get();
 
 
-        String carVC = poolAndWalletManager.getVC(credentialRequestResult.getCredentialRequestJson(),credentialOffer);
+        String carVC = poolAndWalletManager.getVC(credentialRequestResult.getCredentialRequestJson(),credentialOffer,member.getName(),carNumber);
 
         System.out.println("\n\n\n받은 자동차에 대한 VC : " + carVC);
 
@@ -86,6 +86,9 @@ public class CarService {
                 , carVC, parsedCredDefResponse.getObjectJson(), null);
 
         poolAndWalletManager.closeUserWallet(memberWallet);
+
+        // TODO : VC 생성시...
+
     }
 
     @Transactional
@@ -97,7 +100,7 @@ public class CarService {
 
         JSONObject json = new JSONObject();
 
-        String filter = json.put("issuer_did", "FRHUK728gcnv3VM3GwCwQR").toString();
+        String filter = json.put("issuer_did", "SwCFy44Qd6FKYPD2ABn7Jb").toString();
 
         // 발급자의 did로 뽑아냄 VC를 뽑아냄..?
         String credentials = Anoncreds.proverGetCredentials(memberWallet, filter).get();
@@ -131,25 +134,24 @@ public class CarService {
 
         Wallet memberWallet = poolAndWalletManager.openUserWallet(member.getEmail(), walletPassword);
 
+        // 이게 제출할 VP 구조 정의한 것
         String proofRequestJson = poolAndWalletManager.getProofRequest(memberId);
-
-        //poolAndWalletManager.createVP(proofRequestJson, memberWallet, member.getWalletMasterKey(), member.getName(), referentVC);
 
         Map<String, String> vp = poolAndWalletManager.createVP(proofRequestJson, memberWallet, member.getWalletMasterKey(), member.getName(), referentVC, memberId);
 
-        //boolean res = poolAndWalletManager.verifyVP(proofRequestJson, vp);
-//
-//        // 여기서 request
-//        if(res){ // 일치시
-//            // TODO : 받은 데이터들로 자동차 등록 chainCode 실행
-//            //      흠... VP 검증과 자동차 등록을 분리할까..
-//            System.out.println("일치!!!");
-//
-//        }else{
-//            // TODO : 검증안되면 Exception 던지기
-//            System.out.println("불일치 !!");
-//
-//        }
+        boolean res = poolAndWalletManager.verifyVP(proofRequestJson, vp);
+
+        // 여기서 request
+        if(res){ // 일치시
+            // TODO : 받은 데이터들로 자동차 등록 chainCode 실행
+            //      흠... VP 검증과 자동차 등록을 분리할까..
+            System.out.println("일치!!!");
+
+        }else{
+            // TODO : 검증안되면 Exception 던지기
+            System.out.println("불일치 !!");
+
+        }
 
         poolAndWalletManager.closeUserWallet(memberWallet);
 

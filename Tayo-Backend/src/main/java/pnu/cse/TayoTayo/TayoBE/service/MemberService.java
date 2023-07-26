@@ -48,7 +48,7 @@ public class MemberService {
         //  3. Indy 지갑 생성까지 !!
         try{
             // TODO : 여기서 생성되는 DID랑 verKey를 DB에 저장해야할까...?
-            Wallet memberWallet = poolAndWalletManager.createMemberWallet(request.getEmail(), "tempWalletPassword");
+            Wallet memberWallet = poolAndWalletManager.createMemberWallet(request.getEmail(), request.getWalletPassword());
             String MasterSecretId = Anoncreds.proverCreateMasterSecret(memberWallet, null).get();
 
             MemberEntity newMember = MemberEntity.builder()

@@ -22,8 +22,9 @@ public class MemberRequest {
 
     @Getter
     @Setter
-    public static class walletPasswordRequest{
+    public static class createVCRequest{
         private String walletPassword;
+        private String carNumber;
     }
 
     @Getter
@@ -62,6 +63,7 @@ public class MemberRequest {
         private String phoneNumber;
         private String nickName;
         private String introduce;
+        private String walletPassword;
     }
 
 }

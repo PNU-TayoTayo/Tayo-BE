@@ -216,7 +216,7 @@ public class PoolAndWalletManager {
 
     }
 
-    public String getVC(String credentialRequestJson, String credentialOffer) {
+    public String getVC(String credentialRequestJson, String credentialOffer, String memberName, String carNumber) {
 
         RestTemplate restTemplate = new RestTemplate();
         String url = "http://localhost:8081/vc_service/getVC";
@@ -227,6 +227,9 @@ public class PoolAndWalletManager {
         Map<String, String> request = new HashMap<>();
         request.put("credentialRequestJson", credentialRequestJson);
         request.put("credentialOffer", credentialOffer);
+        request.put("memberName",memberName);
+        request.put("carNumber",carNumber);
+
 
         HttpEntity<Map<String, String>> entity = new HttpEntity<>(request, headers);
 
@@ -262,24 +265,28 @@ public class PoolAndWalletManager {
                         .put("attr1_referent", new JSONObject().put("name", "owner_first_name"))
                         .put("attr2_referent", new JSONObject().put("name", "owner_last_name"))
                         .put("attr3_referent", new JSONObject().put("name", "car_number").put("restrictions", transcriptRestrictions))
-                        .put("attr4_referent", new JSONObject().put("name", "car_model").put("restrictions", transcriptRestrictions)))
+                        .put("attr4_referent", new JSONObject().put("name", "car_model").put("restrictions", transcriptRestrictions))
+                        .put("attr5_referent", new JSONObject().put("name", "car_fuel").put("restrictions", transcriptRestrictions))
+                        .put("attr6_referent", new JSONObject().put("name", "driving_record").put("restrictions", transcriptRestrictions))
+                        .put("attr7_referent", new JSONObject().put("name", "inspection_record").put("restrictions", transcriptRestrictions))
+                        .put("attr8_referent", new JSONObject().put("name", "car_delivery_date").put("restrictions", transcriptRestrictions)))
                 .put("requested_predicates", new JSONObject()
-                        .put("predicate1_referent", new JSONObject()
-                                .put("name", "driving_record")
-                                .put("p_type", ">=")
-                                .put("p_value", 4) // 주행 거리 200,000km 이하
-                                .put("restrictions", transcriptRestrictions))
-//                        // 출고 이후 15년 미만
+//                        .put("predicate1_referent", new JSONObject()
+//                                .put("name", "driving_record")
+//                                .put("p_type", ">=")
+//                                .put("p_value", 200) // 주행 거리 200,000km 이하
+//                                .put("restrictions", transcriptRestrictions))
+////                        // 출고 이후 15년 미만
 //                        .put("predicate2_referent", new JSONObject()
 //                                .put("name", "car_delivery_date")
-//                                .put("p_type", "<=")
-//                                .put("p_value", LocalDate.now().minusYears(15).toString())
+//                                .put("p_type", ">=")
+//                                .put("p_value",20220101)
 //                                .put("restrictions", transcriptRestrictions))
 //                        // 정기 검사 기간 6개월 이내 (검사 결과 모두 적합!)
 //                        .put("predicate3_referent", new JSONObject()
 //                                .put("name", "inspection_record")
-//                                .put("p_type", "<=")
-//                                .put("p_value", LocalDate.now().minusMonths(6).toString())
+//                                .put("p_type", ">=")
+//                                .put("p_value", 20200101)
 //                                .put("restrictions", transcriptRestrictions))
                 )
                 .toString();
@@ -289,10 +296,6 @@ public class PoolAndWalletManager {
 
     public Map<String, String> createVP(String proofRequestJson, Wallet memberWallet , String masterKey, String memberName ,String referentVC, Long memberId) throws Exception {
 
-        // TODO : 해당 member Wallet에 자동차에 대한 VC가 여러가지가 있으면 뭘 가져오는거지?
-        //          즉. proofRequestJson이 VP 구조인데 이걸 채우는거지
-        //
-
         CredentialsSearchForProofReq proofRequest = CredentialsSearchForProofReq.open(
                 memberWallet, proofRequestJson, null).get();
 
@@ -301,24 +304,25 @@ public class PoolAndWalletManager {
         JSONArray credentialsForAttribute3 = new JSONArray(proofRequest.fetchNextCredentials("attr3_referent", 100).get());
         String credentialIdForAttribute3 = credentialsForAttribute3.getJSONObject(0).getJSONObject("cred_info").getString("referent");
 
-        System.out.println("\n\n 여기부터 !!!! : "+credentialsForAttribute3.toString());
-        System.out.println(credentialIdForAttribute3);
-
         JSONArray credentialsForAttribute4 = new JSONArray(proofRequest.fetchNextCredentials("attr4_referent", 100).get());
         String credentialIdForAttribute4 = credentialsForAttribute4.getJSONObject(0).getJSONObject("cred_info").getString("referent");
 
-        System.out.println(credentialsForAttribute4.toString());
-        System.out.println(credentialIdForAttribute4);
+        JSONArray credentialsForAttribute5 = new JSONArray(proofRequest.fetchNextCredentials("attr5_referent", 100).get());
+        String credentialIdForAttribute5 = credentialsForAttribute5.getJSONObject(0).getJSONObject("cred_info").getString("referent");
 
-        System.out.println("여기 에러 !");
+        JSONArray credentialsForAttribute6 = new JSONArray(proofRequest.fetchNextCredentials("attr6_referent", 100).get());
+        String credentialIdForAttribute6 = credentialsForAttribute6.getJSONObject(0).getJSONObject("cred_info").getString("referent");
 
-        JSONArray credentialsForPredicate1 = new JSONArray(proofRequest.fetchNextCredentials("predicate1_referent", 100).get());
-        System.out.println("여기 에러 !");
-        String credentialIdForPredicate1 = credentialsForPredicate1.getJSONObject(0).getJSONObject("cred_info").getString("referent");
+        JSONArray credentialsForAttribute7 = new JSONArray(proofRequest.fetchNextCredentials("attr7_referent", 100).get());
+        String credentialIdForAttribute7 = credentialsForAttribute7.getJSONObject(0).getJSONObject("cred_info").getString("referent");
 
-        System.out.println(credentialsForPredicate1.toString());
-        System.out.println(credentialIdForPredicate1);
+        JSONArray credentialsForAttribute8 = new JSONArray(proofRequest.fetchNextCredentials("attr8_referent", 100).get());
+        String credentialIdForAttribute8 = credentialsForAttribute8.getJSONObject(0).getJSONObject("cred_info").getString("referent");
 
+
+//        JSONArray credentialsForPredicate1 = new JSONArray(proofRequest.fetchNextCredentials("predicate1_referent", 100).get());
+//        String credentialIdForPredicate1 = credentialsForPredicate1.getJSONObject(0).getJSONObject("cred_info").getString("referent");
+//
 //        JSONArray credentialsForPredicate2 = new JSONArray(proofRequest.fetchNextCredentials("predicate2_referent", 100).get());
 //        String credentialIdForPredicate2 = credentialsForPredicate2.getJSONObject(0).getJSONObject("cred_info").getString("referent");
 //
@@ -326,7 +330,7 @@ public class PoolAndWalletManager {
 //        String credentialIdForPredicate3 = credentialsForPredicate3.getJSONObject(0).getJSONObject("cred_info").getString("referent");
 //
         proofRequest.close();
-//
+
         // 이게 제출할 vp
         String credentialsJson = new JSONObject()
                 .put("self_attested_attributes", new JSONObject()
@@ -339,17 +343,29 @@ public class PoolAndWalletManager {
                                 .put("revealed", true))
                         .put("attr4_referent", new JSONObject()
                                 .put("cred_id", referentVC)
+                                .put("revealed", true))
+                        .put("attr5_referent", new JSONObject()
+                                .put("cred_id", referentVC)
+                                .put("revealed", true))
+                        .put("attr6_referent", new JSONObject()
+                                .put("cred_id", referentVC)
+                                .put("revealed", true))
+                        .put("attr7_referent", new JSONObject()
+                                .put("cred_id", referentVC)
+                                .put("revealed", true))
+                        .put("attr8_referent", new JSONObject()
+                                .put("cred_id", referentVC)
                                 .put("revealed", true)))
                 // requested_predicates 이거는 영지식 증명들
-//                .put("requested_predicates", new JSONObject()
+                .put("requested_predicates", new JSONObject()
 //                        .put("predicate1_referent", new JSONObject()
 //                                .put("cred_id",referentVC)))
 //                        .put("predicate2_referent", new JSONObject()
-//                                .put("cred_id",credentialIdForPredicate2))
+//                                .put("cred_id",referentVC))
 //                        .put("predicate3_referent", new JSONObject()
-//                                .put("cred_id",credentialIdForPredicate3))
+//                                .put("cred_id",referentVC))
 //                )
-                .toString();
+                ).toString();
 
         System.out.println("\n\ncredentialsJson : "+credentialsJson);
 
@@ -361,6 +377,10 @@ public class PoolAndWalletManager {
 
         populateCredentialInfo(pool, Tayo.get(memberId+"_did").toString(), schemasMap, credDefsMap, credentialsForAttribute3);
         populateCredentialInfo(pool, Tayo.get(memberId+"_did").toString(), schemasMap, credDefsMap, credentialsForAttribute4);
+        populateCredentialInfo(pool, Tayo.get(memberId+"_did").toString(), schemasMap, credDefsMap, credentialsForAttribute5);
+        populateCredentialInfo(pool, Tayo.get(memberId+"_did").toString(), schemasMap, credDefsMap, credentialsForAttribute6);
+        populateCredentialInfo(pool, Tayo.get(memberId+"_did").toString(), schemasMap, credDefsMap, credentialsForAttribute7);
+        populateCredentialInfo(pool, Tayo.get(memberId+"_did").toString(), schemasMap, credDefsMap, credentialsForAttribute8);
 
         Map<String, String> temp = new HashMap<>();
 
@@ -406,6 +426,11 @@ public class PoolAndWalletManager {
 
         String revocRegDefs = new JSONObject().toString();
         String revocRegs = new JSONObject().toString();
+
+        System.out.println("===========");
+        System.out.println(vpMap.get("schemas"));
+        System.out.println(vpMap.get("credDefs"));
+        System.out.println("===========");
 
         // 검증 과정
         Boolean same = Anoncreds.verifierVerifyProof(

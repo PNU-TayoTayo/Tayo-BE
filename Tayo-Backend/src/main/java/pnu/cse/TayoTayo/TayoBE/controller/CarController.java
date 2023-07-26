@@ -13,7 +13,7 @@ import pnu.cse.TayoTayo.TayoBE.service.CarService;
 
 import java.util.concurrent.ExecutionException;
 
-@Tag(name = "tayo-api", description = "타요타요 API")
+@Tag(name = "tayo-api:car", description = "타요타요 자동차 관리 페이지 관련 API")
 @RestController
 @RequestMapping("/tayo/car")
 @RequiredArgsConstructor
@@ -24,12 +24,10 @@ public class CarController {
 
     @Operation(summary = "VC 생성하기", description = "VC를 생성하는 API 입니다.")
     @PostMapping("/vc")
-    public void createVC(Authentication authentication,@RequestBody MemberRequest.walletPasswordRequest request) throws IndyException, ExecutionException, InterruptedException {
-
-        ((CustomUserDetails) authentication.getPrincipal()).getId();
+    public void createVC(Authentication authentication,@RequestBody MemberRequest.createVCRequest request) throws IndyException, ExecutionException, InterruptedException {
 
         carService.createVC(((CustomUserDetails) authentication.getPrincipal()).getId(),
-                request.getWalletPassword());
+                request.getWalletPassword(),request.getCarNumber());
 
 
         //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
@@ -47,10 +45,12 @@ public class CarController {
     }
 
     @Operation(summary = "차 등록하기", description = "차 등록하는 API 입니다.")
-    @PostMapping
+    @PostMapping("/vp")
     public void registerCar(Authentication authentication , @RequestBody MemberRequest.registerCarRequest request) throws Exception {
 
-        ((CustomUserDetails) authentication.getPrincipal()).getId();
+
+        System.out.println("받은 요청:"+request.getReferentVC());
+        System.out.println("받은 요청:"+request.getWalletPassword());
 
         carService.postCar(((CustomUserDetails) authentication.getPrincipal()).getId(),
                 request.getWalletPassword(), request.getReferentVC());
@@ -60,7 +60,7 @@ public class CarController {
     }
 
     @Operation(summary = "본인이 등록한 자동차 조회", description = "본인이 등록한 자동차 조회하는 API입니다.")
-    @GetMapping
+    @GetMapping("/vp")
     public void myCar(Authentication authentication){
 
         // TODO : 여긴 그냥 체인 코드 실행시키면 될듯..?

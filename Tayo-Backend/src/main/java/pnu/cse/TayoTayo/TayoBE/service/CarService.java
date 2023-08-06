@@ -11,6 +11,7 @@ import org.hyperledger.indy.sdk.ledger.LedgerResults;
 import org.hyperledger.indy.sdk.wallet.Wallet;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
@@ -32,7 +33,8 @@ public class CarService {
 
     private final PoolAndWalletManager poolAndWalletManager;
 
-
+    @Value("${VCService.issuer.DID}")
+    private String issuerDID;
 
     /**
      * 1. id랑 지갑 비번을 받아서 그걸로 wallet open ㅇ
@@ -100,7 +102,7 @@ public class CarService {
 
         JSONObject json = new JSONObject();
 
-        String filter = json.put("issuer_did", "SwCFy44Qd6FKYPD2ABn7Jb").toString();
+        String filter = json.put("issuer_did", issuerDID).toString();
 
         // 발급자의 did로 뽑아냄 VC를 뽑아냄..?
         String credentials = Anoncreds.proverGetCredentials(memberWallet, filter).get();
@@ -143,9 +145,9 @@ public class CarService {
 
         // 여기서 request
         if(res){ // 일치시
-            // TODO : 받은 데이터들로 자동차 등록 chainCode 실행
-            //      흠... VP 검증과 자동차 등록을 분리할까..
             System.out.println("일치!!!");
+            // TODO : 받은 데이터들로 자동차 등록 chainCode 실행
+            //      여기서 S3에 이미지 등록하기 + CHAINCODE 실행
 
         }else{
             // TODO : 검증안되면 Exception 던지기

@@ -10,7 +10,10 @@ import org.springframework.web.bind.annotation.*;
 import pnu.cse.TayoTayo.TayoBE.config.security.CustomUserDetails;
 import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
 import pnu.cse.TayoTayo.TayoBE.service.CarService;
+import pnu.cse.TayoTayo.TayoBE.service.S3Uploader;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 @Tag(name = "tayo-api:car", description = "타요타요 자동차 관리 페이지 관련 API")
@@ -21,6 +24,7 @@ public class CarController {
 
     private final CarService carService;
 
+    private final S3Uploader s3Uploader;
 
     @Operation(summary = "VC 생성하기", description = "VC를 생성하는 API 입니다.")
     @PostMapping("/vc")
@@ -64,6 +68,18 @@ public class CarController {
     public void myCar(Authentication authentication){
 
         // TODO : 여긴 그냥 체인 코드 실행시키면 될듯..?
+
+        //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
+    }
+
+    @PostMapping("/s3Upload")
+    public void s3Test(Authentication authentication ,MemberRequest.s3TestRequest request) throws IOException {
+
+        List<String> urls = s3Uploader.uploadFile(request.getContent());
+
+        for(String url : urls){
+            System.out.println(url);
+        }
 
         //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
     }

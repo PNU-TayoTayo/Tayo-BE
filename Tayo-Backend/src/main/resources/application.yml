@@ -1,13 +1,11 @@
-
-
 springdoc:
   packages-to-scan: pnu.cse.TayoTayo
   default-consumes-media-type: application/json;charset=UTF-8
   default-produces-media-type: application/json;charset=UTF-8
   swagger-ui:
-    path: / # Swagger UI ?? => localhost:8031/chat-ui.html
-    tags-sorter: alpha # alpha : ??? ? ?? ??, method: HTTP method ? ??
-    operations-sorter: alpha # alpha : ??? ? ?? ??, method: HTTP method ? ??
+    path: /
+    tags-sorter: alpha
+    operations-sorter: alpha
   api-docs:
     path: /api-docs/json
     groups:
@@ -20,9 +18,13 @@ springdoc:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/tayotayo?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: root
-    password: 1234
+    url: ${MYSQL_URL}
+    username: ${MYSQL_ID}
+    password: ${MYSQL_PASSWORD}
+  servlet:
+    multipart:
+      max-file-size: 10MB # 파일 하나 당 최대 사이즈
+      max-request-size: 20MB # 요청 당 최대 사이즈
 
 spring.jpa:
   database: mysql
@@ -31,3 +33,19 @@ spring.jpa:
   #hibernate.ddl-auto: update
   hibernate.format_sql: true
   hibernate.show-sql: true
+
+cloud:
+  aws:
+    s3:
+      bucket: ${TAYOTAYO_S3_NAME}
+    region:
+      static: ap-northeast-2
+    stack:
+      auto: false
+    credentials:
+      access-key: ${TAYOTAYO_S3_ACCESS_KEY}
+      secret-key: ${TAYOTAYO_S3_SECRET_KEY}
+
+VCService:
+  issuer:
+    DID: 3kvRTa9XsvXZPCRLfUw3De

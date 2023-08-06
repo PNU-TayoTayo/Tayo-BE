@@ -2,16 +2,26 @@ package pnu.cse.TayoTayo.TayoBE.dto.request;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 
 public class MemberRequest {
 
     @Getter
     @Setter
+    public static class s3TestRequest{
+        private List<MultipartFile> content;
+    }
+
+
+    @Getter
+    @Setter
     public static class registerCarRequest{
         private String walletPassword;
         private String referentVC;
-        // TODO : 요금, 위치 등등 추가 정보
+        // TODO : 요금, 위치, 이미지 등록 등등 추가 정보
     }
 
     @Getter

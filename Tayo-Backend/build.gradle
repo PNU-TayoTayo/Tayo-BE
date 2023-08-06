@@ -58,6 +58,9 @@ dependencies {
 	implementation("commons-io:commons-io:2.11.0")
 	implementation("org.json:json:20230227")
 	implementation("org.hyperledger:indy:1.15.0")
+
+	// AWS-s3
+	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
 }
 
 tasks.named('test') {

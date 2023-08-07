@@ -14,13 +14,6 @@ public class MemberRequest {
 
     @Getter
     @Setter
-    public static class s3TestRequest{
-        private List<MultipartFile> content;
-    }
-
-
-    @Getter
-    @Setter
     public static class registerCarRequest{
         private String walletPassword; // 본인 지갑 비밀번호
         private String referentVC; // 등록할 자동차에 대한 VC

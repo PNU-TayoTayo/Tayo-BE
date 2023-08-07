@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
+import pnu.cse.TayoTayo.TayoBE.dto.response.CreateVCResponse;
+import pnu.cse.TayoTayo.TayoBE.dto.response.RegisterCarResponse;
 import pnu.cse.TayoTayo.TayoBE.model.Member;
 import pnu.cse.TayoTayo.TayoBE.model.entity.MemberEntity;
 import pnu.cse.TayoTayo.TayoBE.repository.MemberRepository;
@@ -57,7 +59,7 @@ public class CarService {
      */
 
     @Transactional
-    public void createVC(Long Id , String walletPassword, String carNumber) throws IndyException, ExecutionException, InterruptedException {
+    public String createVC(Long Id , String walletPassword, String carNumber) throws IndyException, ExecutionException, InterruptedException {
 
         MemberEntity member = memberRepository.findOne(Id);
 
@@ -93,7 +95,7 @@ public class CarService {
 
         poolAndWalletManager.closeUserWallet(memberWallet);
 
-        // TODO : VC 생성시...
+        return member.getName();
 
     }
 
@@ -132,7 +134,7 @@ public class CarService {
      */
 
     @Transactional
-    public void postCar(Long memberId , MemberRequest.registerCarRequest request , List<MultipartFile> images) throws Exception {
+    public RegisterCarResponse postCar(Long memberId , MemberRequest.registerCarRequest request , List<MultipartFile> images) throws Exception {
 
         System.out.println("자동차 등록을 위한 VP 생성");
 
@@ -147,7 +149,9 @@ public class CarService {
 
         boolean res = poolAndWalletManager.verifyVP(proofRequestJson, vp);
 
-        // 여기서 request
+        String carNumber;
+
+        // 여기서 reques
         if(res){
             System.out.println("VP 검증 완료 !!!!");
 
@@ -170,7 +174,7 @@ public class CarService {
             JSONObject revealedAttrs = new JSONObject(proofJson).getJSONObject("requested_proof").getJSONObject("revealed_attrs");
 
             //String userName = selfAttestedAttrs.getString("attr1_referent") + selfAttestedAttrs.getString("attr2_referent");
-            String carNumber = revealedAttrs.getJSONObject("attr3_referent").getString("raw");
+            carNumber = revealedAttrs.getJSONObject("attr3_referent").getString("raw");
             String carModel = revealedAttrs.getJSONObject("attr4_referent").getString("raw");
             String carFuel = revealedAttrs.getJSONObject("attr5_referent").getString("raw");
             String drivingRecord = revealedAttrs.getJSONObject("attr6_referent").getString("raw");
@@ -189,13 +193,22 @@ public class CarService {
 
             // TODO : 위 데이터 기반으로 자동차 등록 chainCode 실행
 
+            poolAndWalletManager.closeUserWallet(memberWallet);
+
+            return new RegisterCarResponse(
+                    member.getName(),
+                    carNumber,
+                    request.getLocation(),
+                    request.getSharingPrice(),
+                    request.getTimeList());
+
         }else{
             System.out.println("VP 검증 실패 !!");
+            poolAndWalletManager.closeUserWallet(memberWallet);
             // TODO : 검증안되면 Exception 던지기
         }
 
-        poolAndWalletManager.closeUserWallet(memberWallet);
-
+        return null;
     }
 
 

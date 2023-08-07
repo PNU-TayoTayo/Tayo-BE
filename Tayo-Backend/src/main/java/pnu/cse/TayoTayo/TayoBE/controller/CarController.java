@@ -10,6 +10,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import pnu.cse.TayoTayo.TayoBE.config.security.CustomUserDetails;
 import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
+import pnu.cse.TayoTayo.TayoBE.dto.response.CreateVCResponse;
+import pnu.cse.TayoTayo.TayoBE.dto.response.MemberInfoResponse;
+import pnu.cse.TayoTayo.TayoBE.dto.response.RegisterCarResponse;
+import pnu.cse.TayoTayo.TayoBE.dto.response.Response;
 import pnu.cse.TayoTayo.TayoBE.service.CarService;
 import pnu.cse.TayoTayo.TayoBE.service.S3Uploader;
 
@@ -28,15 +32,14 @@ public class CarController {
 
     @Operation(summary = "VC 생성하기", description = "VC를 생성하는 API 입니다.")
     @PostMapping("/vc")
-    public void createVC(Authentication authentication,@RequestBody MemberRequest.createVCRequest request) throws IndyException, ExecutionException, InterruptedException {
+    public Response<CreateVCResponse> createVC(Authentication authentication,@RequestBody MemberRequest.createVCRequest request) throws IndyException, ExecutionException, InterruptedException {
 
-        carService.createVC(((CustomUserDetails) authentication.getPrincipal()).getId(),
-                request.getWalletPassword(),request.getCarNumber());
+        String userName = carService.createVC(((CustomUserDetails) authentication.getPrincipal()).getId(),
+                request.getWalletPassword(), request.getCarNumber());
 
-
-        //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
+        return Response.success("VC를 성공적으로 생성하였습니다.", new CreateVCResponse(userName, request.getCarNumber()));
     }
-
+    // 생성후에 자동으로 vc 조회하기까지 호출하는게 가능한가??
 
     @Operation(summary = "vc 조회하기", description = "본인이 가지고 있는 VC 조회하기 API 입니다.")
     @GetMapping("/vc")
@@ -45,21 +48,26 @@ public class CarController {
         carService.getVC(((CustomUserDetails) authentication.getPrincipal()).getId(),
                 request.getWalletPassword());
 
+        // TODO : 본인 지갑에서 VC 꺼내서 모두 출력!! (이 부분 응답 구조는 더 생각해보자..)
         //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
     }
 
     @Operation(summary = "차 등록하기", description = "차 등록하는 API 입니다.")
     @PostMapping("/vp")
-    public void registerCar(Authentication authentication ,
+    public Response<RegisterCarResponse> registerCar(Authentication authentication ,
                             @RequestPart List<MultipartFile> images,
                             @RequestPart MemberRequest.registerCarRequest request) throws Exception {
 
-        carService.postCar(((CustomUserDetails) authentication.getPrincipal()).getId(),
+        RegisterCarResponse response = carService.postCar(((CustomUserDetails) authentication.getPrincipal()).getId(),
                 request, images);
 
-
-        //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
+        return Response.success("자동차를 성공적으로 등록하였습니다.", response);
     }
+
+
+
+
+
 
 
 

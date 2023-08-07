@@ -25,7 +25,6 @@ public class CarController {
 
     private final CarService carService;
 
-    private final S3Uploader s3Uploader;
 
     @Operation(summary = "VC 생성하기", description = "VC를 생성하는 API 입니다.")
     @PostMapping("/vc")
@@ -62,34 +61,84 @@ public class CarController {
         //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
     }
 
+
+
+    //===========================아래 구현 전===================================================================================
+
     @Operation(summary = "본인이 등록한 자동차 조회", description = "본인이 등록한 자동차 조회하는 API입니다.")
     @GetMapping("/vp")
     public void myCar(Authentication authentication){
 
-        // TODO : 조회 ChainCode 실행
+        // TODO : 본인이 등록한 차량 조회 ChainCode 실행
 
         //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
     }
 
-    // 테스트용
-    @PostMapping("/s3Upload")
-    public void s3Test(Authentication authentication ,
-                       @RequestPart List<MultipartFile> images,
-                       @RequestPart MemberRequest.registerCarRequest request) throws IOException {
+    @Operation(summary = "본인이 등록한 차량 삭제", description = "본인이 등록한 자동차 삭제하는 API입니다.")
+    @DeleteMapping("/vp")
+    public void deleteCar(Authentication authentication){
 
-        List<String> urls = s3Uploader.uploadFile(images);
+        // TODO : 등록된 차량 삭제하는 ChainCode 실행
 
-        System.out.println(request.getWalletPassword());
-        System.out.println(request.getReferentVC());
-        System.out.println(request.getLocation().toString());
-        System.out.println(request.getSharingPrice());
-        System.out.println("<이용 가능 시간>");
-        for(MemberRequest.registerCarRequest.SharingTime st :request.getTimeList()){
-            System.out.println(st.getStartTime() + " ~ " +st.getEndTime());
-        }
-        for(String url : urls){
-            System.out.println(url);
-        }
+        //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
     }
 
+
+    @Operation(summary = "위치 기반 차량 검색 조회", description = "위도와 경도를 기반으로 현재 지도에 있는 자동차를 조회하는 API입니다.")
+    @GetMapping // latitude=?&longitude=? + 날짜 기반..?
+    public void getCars(Authentication authentication, @RequestParam String latitude, @RequestParam String longitude){
+
+        // TODO : 위도,경도, 날짜 기반 조회 ChainCode 실행
+
+        //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
+    }
+
+    @Operation(summary = "차량에 대한 상세 조회", description = "해당 차량에 대한 상세한 내용을 조회하는 API입니다.")
+    @GetMapping("/detail") // /tayo/car/detail/{carId}
+    public void getDetailCar(Authentication authentication, @PathVariable Long carId){
+
+        // TODO : 차량에 대한 상세 조회 ChainCode 실행
+        //      여기서 carId가 chainCode에 등록되는 carId를 써야할 듯?
+
+        //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
+    }
+
+    @Operation(summary = "차량 대여 신청 하기", description = "임차인이 차량 대여 신청을 하면 채팅방이 생성되는 API입니다.")
+    @PostMapping("/detail") // /tayo/car/detail/{carId}
+    public void myCar3(Authentication authentication, @PathVariable Long carId){
+
+        // TODO : 상세조회 정보 기반으로 임차인과 임대인 사이에 채팅방 생성 + 임대인한테 알람
+        
+        //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
+    }
+
+    @Operation(summary = "차량 대여 승인 하기", description = "채팅방에서 임대인이 차량 대여 승인하는 API입니다.")
+    @PostMapping("/grant")
+    public void grantCar(Authentication authentication){
+
+        // TODO : 흠... 이것도 ChainCode..??
+
+        //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
+    }
+
+    @Operation(summary = "결제하기", description = "임차인이 결제를 하는 API입니다.")
+    @PostMapping("/pay") // /tayo/car/pay
+    public void payCar(Authentication authentication){
+
+        // TODO : 결제 ChainCode 실행
+
+        //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
+    }
+
+    /**
+     *  차량 예약 흐름도
+     *
+     *  1. 임대인이 차량 등록
+     *  2. 임차인이 위치 기반 차량 조회 -> 상세 조회
+     *  3. 임차인이 차량 대여 신청시, 임대인과의 채팅방이 생성되고 임대인에게 알림이 감
+     *  4. 둘이서 채팅으로 이야기 주고 받다가
+     *  5. 의견조율후 임대인이 승인을 하면 결제 활성화..?*
+     *
+     * (+ 공유현황 조회, 차량 정보 수정, 신청 알림 조회 ) <= 일단 다 보류
+     */
 }

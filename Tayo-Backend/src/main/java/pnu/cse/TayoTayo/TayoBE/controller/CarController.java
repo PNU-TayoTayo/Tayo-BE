@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.hyperledger.indy.sdk.IndyException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import pnu.cse.TayoTayo.TayoBE.config.security.CustomUserDetails;
 import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
 import pnu.cse.TayoTayo.TayoBE.service.CarService;
@@ -50,14 +51,12 @@ public class CarController {
 
     @Operation(summary = "차 등록하기", description = "차 등록하는 API 입니다.")
     @PostMapping("/vp")
-    public void registerCar(Authentication authentication , @RequestBody MemberRequest.registerCarRequest request) throws Exception {
-
-
-        System.out.println("받은 요청:"+request.getReferentVC());
-        System.out.println("받은 요청:"+request.getWalletPassword());
+    public void registerCar(Authentication authentication ,
+                            @RequestPart List<MultipartFile> images,
+                            @RequestPart MemberRequest.registerCarRequest request) throws Exception {
 
         carService.postCar(((CustomUserDetails) authentication.getPrincipal()).getId(),
-                request.getWalletPassword(), request.getReferentVC());
+                request, images);
 
 
         //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
@@ -67,21 +66,30 @@ public class CarController {
     @GetMapping("/vp")
     public void myCar(Authentication authentication){
 
-        // TODO : 여긴 그냥 체인 코드 실행시키면 될듯..?
+        // TODO : 조회 ChainCode 실행
 
         //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
     }
 
+    // 테스트용
     @PostMapping("/s3Upload")
-    public void s3Test(Authentication authentication ,MemberRequest.s3TestRequest request) throws IOException {
+    public void s3Test(Authentication authentication ,
+                       @RequestPart List<MultipartFile> images,
+                       @RequestPart MemberRequest.registerCarRequest request) throws IOException {
 
-        List<String> urls = s3Uploader.uploadFile(request.getContent());
+        List<String> urls = s3Uploader.uploadFile(images);
 
+        System.out.println(request.getWalletPassword());
+        System.out.println(request.getReferentVC());
+        System.out.println(request.getLocation().toString());
+        System.out.println(request.getSharingPrice());
+        System.out.println("<이용 가능 시간>");
+        for(MemberRequest.registerCarRequest.SharingTime st :request.getTimeList()){
+            System.out.println(st.getStartTime() + " ~ " +st.getEndTime());
+        }
         for(String url : urls){
             System.out.println(url);
         }
-
-        //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
     }
 
 }

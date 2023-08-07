@@ -37,11 +37,6 @@ import java.util.concurrent.ExecutionException;
 @Component
 public class PoolAndWalletManager {
 
-    /*
-        TODO : 지갑 생성하고 close 상태로 둬야 할까? ㅇㅇ
-
-     */
-
     static Logger log = LoggerFactory.getLogger(PoolAndWalletManager.class);
     private final Pool pool;
     private final Wallet stewardWallet;
@@ -54,7 +49,7 @@ public class PoolAndWalletManager {
     private Map<String, Object> Tayo = new HashMap<>();
 
 
-    public PoolAndWalletManager() throws IndyException, ExecutionException, InterruptedException {
+    public PoolAndWalletManager() throws Exception {
         this.pool = createPool();
         this.stewardWallet = createStewardWallet();
         this.TayoWallet = createTayoWallet();
@@ -94,24 +89,30 @@ public class PoolAndWalletManager {
 
         Wallet stWallet = null;
 
-        try {
+        try { // 존재하는 지 체크
             stWallet = Wallet.openWallet(steward.get("wallet_config").toString(), steward.get("wallet_credentials").toString()).get();
             log.info("stwardWallet 이미 존재");
+
+            JSONArray jsonArray3 = new JSONArray(Did.getListMyDidsWithMeta(stWallet).get());
+            JSONObject jsonObject3 = jsonArray3.getJSONObject(0);
+            String stewardDid = jsonObject3.getString("did");
+            steward.put("did",stewardDid);
+
         }catch(Exception e){
             Wallet.createWallet(steward.get("wallet_config").toString(), steward.get("wallet_credentials").toString()).get();
             stWallet = Wallet.openWallet(steward.get("wallet_config").toString(), steward.get("wallet_credentials").toString()).get();
+
+            DidResults.CreateAndStoreMyDidResult stewardDid = Did.createAndStoreMyDid(stWallet, new JSONObject().put("seed", steward.get("seed")).toString()).get();
+            steward.put("did",stewardDid.getDid());
+            steward.put("key",stewardDid.getVerkey());
         }
 
-
-        DidResults.CreateAndStoreMyDidResult stewardDid = Did.createAndStoreMyDid(stWallet, new JSONObject().put("seed", steward.get("seed")).toString()).get();
-        steward.put("did",stewardDid.getDid());
-        steward.put("key",stewardDid.getVerkey());
 
         System.out.println("\n\n===Steward의 지갑 생성 완료===");
         return stWallet;
     }
 
-    private Wallet createTayoWallet() throws IndyException, ExecutionException, InterruptedException {
+    private Wallet createTayoWallet() throws Exception {
 
         System.out.println("\n\n===Tayo 서비스의 지갑 생성 시작===");
 
@@ -125,27 +126,42 @@ public class PoolAndWalletManager {
 
         try { // 만약 존재하면 open
             TaWallet = Wallet.openWallet(Tayo.get("wallet_config").toString(), Tayo.get("wallet_credentials").toString()).get();
+
+            JSONArray jsonArray3 = new JSONArray(Did.getListMyDidsWithMeta(TaWallet).get());
+            JSONObject jsonObject3 = jsonArray3.getJSONObject(0);
+            String tayoDid = jsonObject3.getString("did");
+            Tayo.put("did",tayoDid);
+
         }catch(Exception e){ // 존재안하면 생성하고 open
             Wallet.createWallet(Tayo.get("wallet_config").toString(), Tayo.get("wallet_credentials").toString()).get();
             TaWallet = Wallet.openWallet(Tayo.get("wallet_config").toString(), Tayo.get("wallet_credentials").toString()).get();
+
+            DidResults.CreateAndStoreMyDidResult didResult = Did.createAndStoreMyDid(TaWallet, "{}").get();
+            Tayo.put("did",didResult.getDid());
+            Tayo.put("key",didResult.getVerkey());
+
+            String nymRequest = Ledger.buildNymRequest(steward.get("did").toString(), Tayo.get("did").toString(), Tayo.get("key").toString(),
+                    null, "TRUST_ANCHOR").get();
+            String res = signAndSubmitRequest(pool, stewardWallet,(String)steward.get("did"), nymRequest);
+            System.out.println(res);
         }
 
-        // 존재하면
-        if(TaWallet != null){
-            try {
-                DidResults.CreateAndStoreMyDidResult didResult = Did.createAndStoreMyDid(TaWallet, "{}").get();
-                Tayo.put("did",didResult.getDid());
-                Tayo.put("key",didResult.getVerkey());
-
-                String nymRequest = Ledger.buildNymRequest(steward.get("did").toString(), Tayo.get("did").toString(), Tayo.get("key").toString(),
-                        null, "TRUST_ANCHOR").get();
-                String res = signAndSubmitRequest(pool, stewardWallet,(String)steward.get("did"), nymRequest);
-                System.out.println(res);
-
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
+//        // 존재하면
+//        if(TaWallet != null){
+//            try {
+//                DidResults.CreateAndStoreMyDidResult didResult = Did.createAndStoreMyDid(TaWallet, "{}").get();
+//                Tayo.put("did",didResult.getDid());
+//                Tayo.put("key",didResult.getVerkey());
+//
+//                String nymRequest = Ledger.buildNymRequest(steward.get("did").toString(), Tayo.get("did").toString(), Tayo.get("key").toString(),
+//                        null, "TRUST_ANCHOR").get();
+//                String res = signAndSubmitRequest(pool, stewardWallet,(String)steward.get("did"), nymRequest);
+//                System.out.println(res);
+//
+//            } catch (Exception ex) {
+//                ex.printStackTrace();
+//            }
+//        }
 
         System.out.println("\n\n===Tayo의 지갑 생성 완료===");
 
@@ -159,7 +175,6 @@ public class PoolAndWalletManager {
         Wallet memberWallet = Wallet.openWallet(getWalletConfig(userEmail), new JSONObject().put("key",walletPassword).toString()).get();
 
         System.out.println("\n\n==="+userEmail+"의 지갑 생성 완료===");
-//        memberWallet.closeWallet().get();
 
         return memberWallet;
     }

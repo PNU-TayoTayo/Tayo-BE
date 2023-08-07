@@ -21,6 +21,13 @@ import pnu.cse.TayoTayo.TayoBE.service.MyPageService;
 public class MyPageController {
     private final MyPageService myPageService;
 
+    /*
+
+        TODO : 내 지갑 관리
+            잔액 채우기, 출금하기, 잔액 조회, 최근 거래 내역 조회
+
+     */
+
     @Operation(summary = "내 정보 조회", description = "내 정보를 조회하는 API입니다.")
     @GetMapping
     public Response<MemberInfoResponse> myInfo(Authentication authentication){
@@ -29,13 +36,14 @@ public class MyPageController {
         return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
     }
 
-    // TODO : 회원 탈퇴시 지갑 삭제도 해줘야 함!
-    //          강제로 지갑 파일을 삭제해주는 식으로 해야할 듯????
+
 
     @Operation(summary = "회원 탈퇴", description = "회원 탈퇴하는 API입니다.")
     @DeleteMapping
     public Response<Void> deleteMember(Authentication authentication, @RequestBody MemberRequest.DeleteMemberRequest request){
 
+        // TODO : 회원 탈퇴시 지갑 삭제도 해줘야 함!
+        //          강제로 지갑 파일을 삭제해주는 식으로 해야할 듯????
         myPageService.deleteMember(((CustomUserDetails) authentication.getPrincipal()).getId(),request.getCurrentPassword());
 
         return Response.success("회원 탈퇴에 성공하셨습니다.");

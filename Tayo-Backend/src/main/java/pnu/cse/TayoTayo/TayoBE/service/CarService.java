@@ -14,6 +14,7 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
 import pnu.cse.TayoTayo.TayoBE.model.Member;
 import pnu.cse.TayoTayo.TayoBE.model.entity.MemberEntity;
@@ -21,6 +22,7 @@ import pnu.cse.TayoTayo.TayoBE.repository.MemberRepository;
 import pnu.cse.TayoTayo.TayoBE.util.PoolAndWalletManager;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -32,6 +34,8 @@ public class CarService {
     private final MemberRepository memberRepository;
 
     private final PoolAndWalletManager poolAndWalletManager;
+
+    private final S3Uploader s3Uploader;
 
     @Value("${VCService.issuer.DID}")
     private String issuerDID;
@@ -128,31 +132,66 @@ public class CarService {
      */
 
     @Transactional
-    public void postCar(Long memberId , String walletPassword , String referentVC) throws Exception {
+    public void postCar(Long memberId , MemberRequest.registerCarRequest request , List<MultipartFile> images) throws Exception {
 
         System.out.println("자동차 등록을 위한 VP 생성");
 
         MemberEntity member = memberRepository.findOne(memberId);
 
-        Wallet memberWallet = poolAndWalletManager.openUserWallet(member.getEmail(), walletPassword);
+        Wallet memberWallet = poolAndWalletManager.openUserWallet(member.getEmail(), request.getWalletPassword());
 
         // 이게 제출할 VP 구조 정의한 것
         String proofRequestJson = poolAndWalletManager.getProofRequest(memberId);
 
-        Map<String, String> vp = poolAndWalletManager.createVP(proofRequestJson, memberWallet, member.getWalletMasterKey(), member.getName(), referentVC, memberId);
+        Map<String, String> vp = poolAndWalletManager.createVP(proofRequestJson, memberWallet, member.getWalletMasterKey(), member.getName(), request.getReferentVC(), memberId);
 
         boolean res = poolAndWalletManager.verifyVP(proofRequestJson, vp);
 
         // 여기서 request
-        if(res){ // 일치시
-            System.out.println("일치!!!");
-            // TODO : 받은 데이터들로 자동차 등록 chainCode 실행
-            //      여기서 S3에 이미지 등록하기 + CHAINCODE 실행
+        if(res){
+            System.out.println("VP 검증 완료 !!!!");
+
+            System.out.println("[차량 위치] : " + request.getLocation().toString());
+            System.out.println("[이용 가격] : " + request.getSharingPrice());
+            System.out.println("[이용 가능 시간]");
+            for(MemberRequest.registerCarRequest.SharingTime st :request.getTimeList()){
+                System.out.println(st.getStartTime() + " ~ " +st.getEndTime());
+            }
+
+            List<String> urls = s3Uploader.uploadFile(images);
+            System.out.println("[차량 이미지 url]");
+            for(String url : urls){
+                System.out.println(url);
+            }
+
+            // vp 데이터 뽑기
+            String proofJson = vp.get("proofJson");
+            JSONObject selfAttestedAttrs = new JSONObject(proofJson).getJSONObject("requested_proof").getJSONObject("self_attested_attrs");
+            JSONObject revealedAttrs = new JSONObject(proofJson).getJSONObject("requested_proof").getJSONObject("revealed_attrs");
+
+            //String userName = selfAttestedAttrs.getString("attr1_referent") + selfAttestedAttrs.getString("attr2_referent");
+            String carNumber = revealedAttrs.getJSONObject("attr3_referent").getString("raw");
+            String carModel = revealedAttrs.getJSONObject("attr4_referent").getString("raw");
+            String carFuel = revealedAttrs.getJSONObject("attr5_referent").getString("raw");
+            String drivingRecord = revealedAttrs.getJSONObject("attr6_referent").getString("raw");
+            String inspectionRecord = revealedAttrs.getJSONObject("attr7_referent").getString("raw");
+            String carDeliveryDate = revealedAttrs.getJSONObject("attr8_referent").getString("raw");
+
+            System.out.println("[VP에 있는 데이터]");
+            System.out.println("차주 이름 : " + member.getName());
+            System.out.println("차량 번호 : " + carNumber);
+            System.out.println("차량 모델 : " + carModel);
+            System.out.println("차량 연료 : " + carFuel);
+            System.out.println("주행 거리 : " + drivingRecord);
+            System.out.println("최근 검사 날짜 : " + inspectionRecord);
+            System.out.println("출고 날짜 : " + carDeliveryDate);
+
+
+            // TODO : 위 데이터 기반으로 자동차 등록 chainCode 실행
 
         }else{
+            System.out.println("VP 검증 실패 !!");
             // TODO : 검증안되면 Exception 던지기
-            System.out.println("불일치 !!");
-
         }
 
         poolAndWalletManager.closeUserWallet(memberWallet);

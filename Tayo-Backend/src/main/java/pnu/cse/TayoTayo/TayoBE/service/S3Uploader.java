@@ -42,11 +42,12 @@ public class S3Uploader {
 
         // forEach 구문을 통해 multipartFile로 넘어온 파일들 하나씩 fileNameList에 추가
         multipartFiles.forEach(file -> {
-            //UUID.randomUUID()
-            String fileName = S3_BUCKET_DIRECTORY_NAME +"/"+ UUID.randomUUID() + file.getOriginalFilename();
+
+            String fileName = S3_BUCKET_DIRECTORY_NAME +"/"+ UUID.randomUUID() + file.getName();
             ObjectMetadata objectMetadata = new ObjectMetadata();
             objectMetadata.setContentLength(file.getSize());
             objectMetadata.setContentType(file.getContentType());
+            objectMetadata.setContentDisposition("inline");
 
             try(InputStream inputStream = file.getInputStream()) {
                 amazonS3.putObject(new PutObjectRequest(bucket, fileName, inputStream, objectMetadata)

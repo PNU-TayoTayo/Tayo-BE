@@ -21,13 +21,6 @@ import pnu.cse.TayoTayo.TayoBE.service.MyPageService;
 public class MyPageController {
     private final MyPageService myPageService;
 
-    /*
-
-        TODO: 내 지갑 관리 (잔액 채우기, 출금하기, 잔액 조회, 최근 거래 내역 조회)
-                현재 예약 목록..?
-
-     */
-
     @Operation(summary = "내 정보 조회", description = "내 정보를 조회하는 API입니다.")
     @GetMapping
     public Response<MemberInfoResponse> myInfo(Authentication authentication){
@@ -70,6 +63,44 @@ public class MyPageController {
     }
 
 
+
+
+
+
+
+
+    // ======================================이 밑에 구현 전 =======================================
+    @Operation(summary = "현재 잔액 조회", description = "현재 잔액을 조회하는 API입니다.")
+    @GetMapping("/money")
+    public void getMoney(Authentication authentication){
+
+
+        //return Response.success("한줄 소개 수정에 성공하셨습니다.", MemberIntroResponse.fromMember(member));
+    }
+
+    @Operation(summary = "잔액 채우기", description = "잔액 채우는 API입니다.")
+    @PostMapping("/deposit")
+    public void depositMoney(Authentication authentication){
+
+
+        //return Response.success("한줄 소개 수정에 성공하셨습니다.", MemberIntroResponse.fromMember(member));
+    }
+
+    @Operation(summary = "출금하기", description = "출금하는 API입니다.")
+    @PostMapping("/withdraw")
+    public void withdrawMoney(Authentication authentication){
+
+
+        //return Response.success("한줄 소개 수정에 성공하셨습니다.", MemberIntroResponse.fromMember(member));
+    }
+
+    @Operation(summary = "최근 거래 내역 조회", description = "최근 거래 내역 조회하는 API입니다.")
+    @GetMapping("/recent")
+    public void recentTransaction(Authentication authentication){
+
+
+        //return Response.success("한줄 소개 수정에 성공하셨습니다.", MemberIntroResponse.fromMember(member));
+    }
 
 
 

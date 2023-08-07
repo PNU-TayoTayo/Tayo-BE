@@ -91,6 +91,15 @@ public class CarController {
         //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
     }
 
+    @Operation(summary = "본인이 등록한 차량 수정", description = "본인이 등록한 자동차 수정(vp 자동차 데이터는 수정 불가능)하는 API입니다.")
+    @PutMapping("/vp")
+    public void updateCar(Authentication authentication){
+
+        // TODO : 등록된 차량 수정하는 ChainCode 실행
+
+        //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
+    }
+
 
     @Operation(summary = "위치 기반 차량 검색 조회", description = "위도와 경도를 기반으로 현재 지도에 있는 자동차를 조회하는 API입니다.")
     @GetMapping // latitude=?&longitude=? + 날짜 기반..?
@@ -111,9 +120,9 @@ public class CarController {
         //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
     }
 
-    @Operation(summary = "차량 대여 신청 하기", description = "임차인이 차량 대여 신청을 하면 채팅방이 생성되는 API입니다.")
+    @Operation(summary = "차량 예약 신청 하기", description = "임차인이 차량 대여 신청을 하면 채팅방이 생성되는 API입니다.")
     @PostMapping("/detail") // /tayo/car/detail/{carId}
-    public void myCar3(Authentication authentication, @PathVariable Long carId){
+    public void requestCar(Authentication authentication, @PathVariable Long carId){
 
         // TODO : 상세조회 정보 기반으로 임차인과 임대인 사이에 채팅방 생성 + 임대인한테 알람
         

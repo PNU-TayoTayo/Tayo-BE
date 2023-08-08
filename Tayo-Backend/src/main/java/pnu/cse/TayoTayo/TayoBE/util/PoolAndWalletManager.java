@@ -169,6 +169,7 @@ public class PoolAndWalletManager {
     }
 
     public Wallet createMemberWallet(String userEmail, String walletPassword) throws IndyException, ExecutionException, InterruptedException {
+        // 이미 존재하는 지갑일 때는 ??
 
         System.out.println("\n\n=== 회원가입시 Tayo 서비스 유저의 지갑 생성 시작===");
         Wallet.createWallet(getWalletConfig(userEmail), new JSONObject().put("key",walletPassword).toString()).get();
@@ -253,7 +254,7 @@ public class PoolAndWalletManager {
 
         if (response.getStatusCode().is2xxSuccessful()) {
             String responseBody = response.getBody();
-            System.out.println(responseBody);
+            System.out.println(responseBody); // TODO : 여기서 존재하지 않는 차량일 떄는 exception 던져줘야할 듯?
 
             return responseBody;
         } else {

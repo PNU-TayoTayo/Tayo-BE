@@ -14,7 +14,13 @@ public enum ErrorCode {
     PASSWORD_TERM(HttpStatus.FORBIDDEN,"Tayo-003","ex : 패스워드에 영문, 숫자, 특수문자가 포함되어야하고 공백이 포함될 수 없습니다."),
     PASSWORD_LENGTH(HttpStatus.FORBIDDEN,"Tayo-004","ex : 패스워드의 길이가 8~20자여야 합니다."),
     PASSWORD_MISMATCH(HttpStatus.CONFLICT,"Tayo-011","현재 비밀번호가 일치하지 않습니다."),
-    NEWPASSWORD_MISMATCH(HttpStatus.CONFLICT,"Tayo-012","새 비밀번호랑 새 비밀번호 확인이 일치하지 않습니다.");
+    NEWPASSWORD_MISMATCH(HttpStatus.CONFLICT,"Tayo-012","새 비밀번호랑 새 비밀번호 확인이 일치하지 않습니다."),
+
+    FAIL_CREATE_VC(HttpStatus.FORBIDDEN,"Tayo-020","VC 생성을 실패하였습니다."),
+    FAIL_GET_VC(HttpStatus.FORBIDDEN,"Tayo-021","VC 조회에 실패하였습니다."),
+    FAIL_VERIFY_VP(HttpStatus.FORBIDDEN,"Tayo-022","유효하지 않은 VP 입니다."),
+    FAIL_VERIFY_VP2(HttpStatus.FORBIDDEN,"Tayo-023","VP 검증 과정에서 실패하였습니다.");
+
 
 
 

@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
 import pnu.cse.TayoTayo.TayoBE.dto.response.CreateVCResponse;
+import pnu.cse.TayoTayo.TayoBE.dto.response.MyVCResponse;
 import pnu.cse.TayoTayo.TayoBE.dto.response.RegisterCarResponse;
 import pnu.cse.TayoTayo.TayoBE.model.Member;
 import pnu.cse.TayoTayo.TayoBE.model.entity.MemberEntity;
@@ -24,6 +25,7 @@ import pnu.cse.TayoTayo.TayoBE.repository.MemberRepository;
 import pnu.cse.TayoTayo.TayoBE.util.PoolAndWalletManager;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -100,7 +102,7 @@ public class CarService {
     }
 
     @Transactional
-    public void getVC(Long Id , String walletPassword) throws IndyException, ExecutionException, InterruptedException {
+    public MyVCResponse getVC(Long Id , String walletPassword) throws IndyException, ExecutionException, InterruptedException {
 
         MemberEntity member = memberRepository.findOne(Id);
 
@@ -113,12 +115,32 @@ public class CarService {
         // 발급자의 did로 뽑아냄 VC를 뽑아냄..?
         String credentials = Anoncreds.proverGetCredentials(memberWallet, filter).get();
 
-        // TODO : 유저에게 어떤식으로 제공할 건가.... 이걸 토대로 요청 누르면 등록되는 방식이기 때문에 중요!!
-        System.out.println("\n\ndid : "+Did.getListMyDidsWithMeta(memberWallet).get());
-        System.out.println(credentials);
-
         poolAndWalletManager.closeUserWallet(memberWallet);
 
+        List<MyVCResponse.VerifiableCredential> vcList = new ArrayList<>();
+        JSONArray jsonArray = new JSONArray(credentials);
+
+        for (int i = 0; i < jsonArray.length(); i++) {
+            JSONObject vcObject = jsonArray.getJSONObject(i);
+
+            MyVCResponse.VerifiableCredential vcData = MyVCResponse.VerifiableCredential.builder()
+                    .referent(vcObject.getString("referent"))
+                    .name(vcObject.getJSONObject("attrs").getString("owner_last_name") + vcObject.getJSONObject("attrs").getString("owner_first_name"))
+                    .carModel(vcObject.getJSONObject("attrs").getString("car_model"))
+                    .carNumber(vcObject.getJSONObject("attrs").getString("car_number"))
+                    .carFuel(vcObject.getJSONObject("attrs").getString("car_fuel"))
+                    .carDeliveryDate(vcObject.getJSONObject("attrs").getString("car_delivery_date"))
+                    .inspectionRecord(vcObject.getJSONObject("attrs").getString("inspection_record"))
+                    .drivingRecord(vcObject.getJSONObject("attrs").getString("driving_record"))
+                    .build();
+
+            vcList.add(vcData);
+
+        }
+
+        MyVCResponse response = new MyVCResponse(member.getName(),vcList);
+
+        return response;
     }
 
     /**

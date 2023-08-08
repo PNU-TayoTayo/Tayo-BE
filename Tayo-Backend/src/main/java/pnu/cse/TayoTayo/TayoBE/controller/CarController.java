@@ -10,10 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import pnu.cse.TayoTayo.TayoBE.config.security.CustomUserDetails;
 import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
-import pnu.cse.TayoTayo.TayoBE.dto.response.CreateVCResponse;
-import pnu.cse.TayoTayo.TayoBE.dto.response.MemberInfoResponse;
-import pnu.cse.TayoTayo.TayoBE.dto.response.RegisterCarResponse;
-import pnu.cse.TayoTayo.TayoBE.dto.response.Response;
+import pnu.cse.TayoTayo.TayoBE.dto.response.*;
 import pnu.cse.TayoTayo.TayoBE.service.CarService;
 import pnu.cse.TayoTayo.TayoBE.service.S3Uploader;
 
@@ -43,13 +40,13 @@ public class CarController {
 
     @Operation(summary = "vc 조회하기", description = "본인이 가지고 있는 VC 조회하기 API 입니다.")
     @GetMapping("/vc")
-    public void myVC(Authentication authentication, @RequestBody MemberRequest.getMyVCRequest request) throws IndyException, ExecutionException, InterruptedException {
+    public Response<MyVCResponse> myVC(Authentication authentication, @RequestBody MemberRequest.getMyVCRequest request) throws IndyException, ExecutionException, InterruptedException {
 
-        carService.getVC(((CustomUserDetails) authentication.getPrincipal()).getId(),
+        MyVCResponse response = carService.getVC(((CustomUserDetails) authentication.getPrincipal()).getId(),
                 request.getWalletPassword());
 
-        // TODO : 본인 지갑에서 VC 꺼내서 모두 출력!! (이 부분 응답 구조는 더 생각해보자..)
-        //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
+
+        return Response.success("VC를 성공적으로 조회하였습니다.", response);
     }
 
     @Operation(summary = "차 등록하기", description = "차 등록하는 API 입니다.")
@@ -129,7 +126,7 @@ public class CarController {
         //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
     }
 
-    @Operation(summary = "차량 대여 승인 하기", description = "채팅방에서 임대인이 차량 대여 승인하는 API입니다.")
+    @Operation(summary = "차량 대여 승인 하기 (임대인)", description = "채팅방에서 임대인이 차량 대여 승인하는 API입니다.")
     @PostMapping("/grant")
     public void grantCar(Authentication authentication){
 
@@ -138,7 +135,7 @@ public class CarController {
         //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
     }
 
-    @Operation(summary = "결제하기", description = "임차인이 결제를 하는 API입니다.")
+    @Operation(summary = "결제하기 (임차인)", description = "임차인이 결제를 하는 API입니다.")
     @PostMapping("/pay") // /tayo/car/pay
     public void payCar(Authentication authentication){
 

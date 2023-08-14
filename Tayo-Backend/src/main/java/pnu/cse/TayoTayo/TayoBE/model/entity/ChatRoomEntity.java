@@ -2,25 +2,28 @@ package pnu.cse.TayoTayo.TayoBE.model.entity;
 
 
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Getter
 @Setter
-@Table(name="header")
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ChatHeaderEntity { // 채팅방 느낌임
+public class ChatRoomEntity { // 채팅방 느낌임
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @OneToMany(mappedBy = "chatRoomEntity")
+    List<ChatMessageEntity> chatMessageEntities = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "from_member_id")
@@ -41,6 +44,10 @@ public class ChatHeaderEntity { // 채팅방 느낌임
 
     // TODO : 업데이트 칼럼 필요할듯? -> 제일 최근 메시지 언제 들어왔는지..?
 
+    public void addChatMessage(ChatMessageEntity chatMessageEntity){
+        chatMessageEntity.setChatRoomEntity(this);
+        this.chatMessageEntities.add(chatMessageEntity);
+    }
 
 }
 /*

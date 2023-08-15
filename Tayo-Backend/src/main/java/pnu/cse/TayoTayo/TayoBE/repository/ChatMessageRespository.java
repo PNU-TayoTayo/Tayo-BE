@@ -10,4 +10,7 @@ public interface ChatMessageRespository extends JpaRepository<ChatMessageEntity,
 
     @Query("SELECT COUNT(m) FROM ChatMessageEntity m WHERE m.chatRoomEntity = :chatRoom AND m.read = false")
     int countUnreadMessages(@Param("chatRoom") ChatRoomEntity chatRoom);
+
+    @Query("SELECT cm FROM ChatMessageEntity cm WHERE cm.chatRoomEntity = :chatRoomEntity ORDER BY cm.createdAt DESC")
+    ChatMessageEntity findMostRecentMessageByChatRoom(@Param("chatRoomEntity") ChatRoomEntity chatRoomEntity);
 }

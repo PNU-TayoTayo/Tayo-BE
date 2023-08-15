@@ -12,7 +12,6 @@ import java.util.Date;
 @Getter
 @Setter
 @Table(name="message")
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChatMessageEntity {
@@ -36,8 +35,14 @@ public class ChatMessageEntity {
     @PrePersist
     void registeredAt(){
         this.createdAt = Timestamp.from(Instant.now());
+        this.read = false;
     }
 
-
+    @Builder
+    public ChatMessageEntity(Boolean sentByCarOwner, String content) {
+        //this.id = id;
+        this.sentByCarOwner = sentByCarOwner;
+        this.content = content;
+    }
 }
 

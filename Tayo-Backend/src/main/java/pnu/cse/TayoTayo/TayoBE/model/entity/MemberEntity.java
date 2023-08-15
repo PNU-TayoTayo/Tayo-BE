@@ -14,23 +14,6 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MemberEntity {
-    /*
-        아이디 Id
-
-        이메일 email
-        비밀번호 password
-
-        이름 Name
-        연락처 phoneNumber
-
-        닉네임 nickName
-        한줄 소개 introduce
-
-        평점, 공유횟수(거래 체결 횟수)
-        한줄 소개
-        지갑 Wallet?
-
-     */
 
     @Id
     @GeneratedValue

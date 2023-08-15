@@ -122,6 +122,12 @@ public class CarController {
     public void requestCar(Authentication authentication, @PathVariable Long carId){
 
         // TODO : 상세조회 정보 기반으로 임차인과 임대인 사이에 채팅방 생성 + 임대인한테 알람
+        /*
+            필요한 거
+            - 요청하는 유저의 Id : fromMemberId
+            - 해당 {carId}의 주인 유저의 Id : toMemberId
+
+         */
 
         //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
     }

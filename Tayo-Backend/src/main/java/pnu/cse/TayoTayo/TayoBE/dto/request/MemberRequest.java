@@ -14,6 +14,20 @@ public class MemberRequest {
 
     @Getter
     @Setter
+    public static class sendTestChatMessage{
+        private Long chatRoomId;
+        private String content;
+    }
+
+    @Getter
+    @Setter
+    public static class createTestChatRoomRequest{
+        private Long toMemberId;
+        private Long carId;
+    }
+
+    @Getter
+    @Setter
     public static class registerCarRequest{
         private String walletPassword; // 본인 지갑 비밀번호
         private String referentVC; // 등록할 자동차에 대한 VC

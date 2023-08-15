@@ -15,6 +15,7 @@ import pnu.cse.TayoTayo.TayoBE.repository.MemberRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +25,63 @@ public class ChatService {
     private final ChatMessageRespository chatMessageRespository;
 
     private final ChatRoomRepository chatRoomRepository;
+
+    // 채팅방 생성 (추후에 CarController의 requestCar에서 사용 예정)
+    @Transactional
+    public void createChatRoom(Long fromMemberId, Long toMemberId, Long carId){
+
+        // 1. 임차인(fromMember)이 임대인(toMember) 객체
+        MemberEntity fromMember = memberRepository.findOne(fromMemberId);
+        MemberEntity toMember = memberRepository.findOne(toMemberId);
+
+        // 2. 채팅방이 만들어짐 (채팅방 save)
+        ChatRoomEntity newChatRoom = ChatRoomEntity.builder()
+                .fromMember(fromMember)
+                .toMember(toMember)
+                .build();
+
+        chatRoomRepository.save(newChatRoom);
+
+        // 3. 첫 메시지 하나 생성하고 addChatMessage로 참조
+        ChatMessageEntity newChatMessage = ChatMessageEntity.builder()
+                .sentByCarOwner(false)
+                .content(fromMember.getNickName()+" 님이 "+carId+" 차량에 (날짜 + 차량정보 : 체인코드 조회 요청해서 데이터 가져와야할듯) 대해 대여 신청을 하였습니다.")
+                .build();
+
+        newChatRoom.addChatMessage(newChatMessage);
+        // 4. TODO : 메시지 save (있어야 하나??)
+        // chatMessageRespository.save(newChatMessage);
+
+    }
+
+    // MessageController의 sendMessage에 DB에 저장하는 곳에 구현 예정
+    @Transactional
+    public void sendChatMessage(Long senderId, Long chatRoomId,String content){
+
+        // 1. ChatRoomEntity을 불러온다 TODO : 없으면 exception 처리
+        Optional<ChatRoomEntity> chatRoom = chatRoomRepository.findById(chatRoomId);
+
+        // 2. 메시지 보낸 애가 차주인지 확인해야 함
+        //       senderId가 해당 ChatRoomEntity에서 차주인지 확인 -> sentByCarOwner
+        boolean isCarOwner;
+        if(senderId.equals(chatRoom.get().getToMember().getId())){ // 차주이면
+            isCarOwner = true;
+        }else{
+            isCarOwner = false;
+        }
+
+        // 3. ChatMessageEntity를 생성 (sentByCarOwner, content)
+        ChatMessageEntity newChatMessage = ChatMessageEntity.builder()
+                .sentByCarOwner(isCarOwner)
+                .content(content)
+                .build();
+        chatRoom.get().addChatMessage(newChatMessage);
+
+        // 4. 메시지 save
+        // chatMessageRespository.save(chatMessage);
+
+    }
+
 
     @Transactional
     public ChatRoomsResponse getChatRooms(Long userId){
@@ -52,6 +110,7 @@ public class ChatService {
                     .chatRoomId(chatRoom.getId())
                     .opponentNickName(opponentNickName)
                     .lastMessage(chatRoom.getLastMessage())
+                    //.lastMessage(chatMessageRespository.findMostRecentMessageByChatRoom(chatRoom).getContent())
                     .unreadMessageCount(chatMessageRespository.countUnreadMessages(chatRoom))
                     .build();
             cr.add(chatRoomsResponse);

@@ -13,7 +13,6 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChatRoomEntity { // 채팅방 느낌임
@@ -46,9 +45,19 @@ public class ChatRoomEntity { // 채팅방 느낌임
     @PreUpdate
     void updatedAt(){ this.updatedAt = Timestamp.from(Instant.now()); }
 
+
+    @Builder
+    public ChatRoomEntity(MemberEntity fromMember, MemberEntity toMember) {
+        //this.id = id;
+        this.fromMember = fromMember;
+        this.toMember = toMember;
+        //this.lastMessage = lastMessage;
+    }
+
     public void addChatMessage(ChatMessageEntity chatMessageEntity){
         chatMessageEntity.setChatRoomEntity(this);
         this.chatMessageEntities.add(chatMessageEntity);
+        this.lastMessage = chatMessageEntity.getContent();
     }
 
 }

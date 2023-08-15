@@ -35,14 +35,16 @@ public class ChatRoomEntity { // 채팅방 느낌임
 
     private String lastMessage;
 
-    private Date createdAt; // 보낸시각
+    private Timestamp createdAt; // 생성 시각
+    private Timestamp updatedAt;
 
     @PrePersist
     void registeredAt(){
         this.createdAt = Timestamp.from(Instant.now());
     }
 
-    // TODO : 업데이트 칼럼 필요할듯? -> 제일 최근 메시지 언제 들어왔는지..?
+    @PreUpdate
+    void updatedAt(){ this.updatedAt = Timestamp.from(Instant.now()); }
 
     public void addChatMessage(ChatMessageEntity chatMessageEntity){
         chatMessageEntity.setChatRoomEntity(this);

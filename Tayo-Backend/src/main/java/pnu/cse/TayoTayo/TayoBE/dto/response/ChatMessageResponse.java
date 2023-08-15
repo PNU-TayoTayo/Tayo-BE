@@ -26,6 +26,4 @@ public class ChatMessageResponse {
         private Date sentAt; // 보낸 날짜
     }
 
-
-
 }

@@ -108,7 +108,7 @@ public class CarController {
     }
 
     @Operation(summary = "차량에 대한 상세 조회", description = "해당 차량에 대한 상세한 내용을 조회하는 API입니다.")
-    @GetMapping("/detail") // /tayo/car/detail/{carId}
+    @GetMapping("/detail/{carId}") // /tayo/car/detail/{carId}
     public void getDetailCar(Authentication authentication, @PathVariable Long carId){
 
         // TODO : 차량에 대한 상세 조회 ChainCode 실행
@@ -118,11 +118,11 @@ public class CarController {
     }
 
     @Operation(summary = "차량 예약 신청 하기", description = "임차인이 차량 대여 신청을 하면 채팅방이 생성되는 API입니다.")
-    @PostMapping("/detail") // /tayo/car/detail/{carId}
+    @PostMapping("/detail/{carId}") // /tayo/car/detail/{carId}
     public void requestCar(Authentication authentication, @PathVariable Long carId){
 
         // TODO : 상세조회 정보 기반으로 임차인과 임대인 사이에 채팅방 생성 + 임대인한테 알람
-        
+
         //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
     }
 

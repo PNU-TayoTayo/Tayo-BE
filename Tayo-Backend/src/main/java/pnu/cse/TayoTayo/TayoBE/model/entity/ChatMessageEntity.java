@@ -31,7 +31,7 @@ public class ChatMessageEntity {
 
     private Boolean read; // 읽었는지 안읽었는지
 
-    private Date createdAt; // 보낸시각
+    private Timestamp createdAt; // 보낸시각
 
     @PrePersist
     void registeredAt(){

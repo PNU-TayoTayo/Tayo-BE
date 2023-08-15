@@ -11,7 +11,6 @@ import java.util.Date;
 @Entity
 @Getter
 @Setter
-@Table(name="message")
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChatMessageEntity {
@@ -28,14 +27,14 @@ public class ChatMessageEntity {
 
     private String content; // Text 타입
 
-    private Boolean read; // 읽었는지 안읽었는지
+    private Boolean isRead; // 읽었는지 안읽었는지
 
     private Timestamp createdAt; // 보낸시각
 
     @PrePersist
     void registeredAt(){
         this.createdAt = Timestamp.from(Instant.now());
-        this.read = false;
+        this.isRead = false;
     }
 
     @Builder

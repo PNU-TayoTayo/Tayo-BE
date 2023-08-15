@@ -22,7 +22,7 @@ public class ChatRoomEntity { // 채팅방 느낌임
     private Long id;
 
     @OneToMany(mappedBy = "chatRoomEntity")
-    List<ChatMessageEntity> chatMessageEntities = new ArrayList<>();
+    private List<ChatMessageEntity> chatMessageEntities = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "from_member_id")

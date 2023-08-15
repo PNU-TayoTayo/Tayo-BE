@@ -26,6 +26,8 @@ public class ChatService {
 
     private final ChatRoomRepository chatRoomRepository;
 
+
+
     // 채팅방 생성 (추후에 CarController의 requestCar에서 사용 예정)
     @Transactional
     public void createChatRoom(Long fromMemberId, Long toMemberId, Long carId){
@@ -50,9 +52,11 @@ public class ChatService {
 
         newChatRoom.addChatMessage(newChatMessage);
         // 4. TODO : 메시지 save (있어야 하나??)
-        // chatMessageRespository.save(newChatMessage);
+        chatMessageRespository.save(newChatMessage);
 
     }
+
+
 
     // MessageController의 sendMessage에 DB에 저장하는 곳에 구현 예정
     @Transactional
@@ -78,7 +82,7 @@ public class ChatService {
         chatRoom.get().addChatMessage(newChatMessage);
 
         // 4. 메시지 save
-        // chatMessageRespository.save(chatMessage);
+        chatMessageRespository.save(newChatMessage);
 
     }
 
@@ -155,8 +159,8 @@ public class ChatService {
              */
 
             // 상대방이 보낸 메시지 + Read가 false인 메시지
-            if(isCarOwner != message.getSentByCarOwner() && !message.getRead()){
-                message.setRead(true);
+            if(isCarOwner != message.getSentByCarOwner() && !message.getIsRead()){
+                message.setIsRead(true);
             }
 
             ChatMessageResponse.ChatMessages m = ChatMessageResponse.ChatMessages.builder()

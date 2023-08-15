@@ -8,7 +8,7 @@ import pnu.cse.TayoTayo.TayoBE.model.entity.ChatRoomEntity;
 
 public interface ChatMessageRespository extends JpaRepository<ChatMessageEntity, Long> {
 
-    @Query("SELECT COUNT(m) FROM ChatMessageEntity m WHERE m.chatRoomEntity = :chatRoom AND m.read = false")
+    @Query("SELECT COUNT(m) FROM ChatMessageEntity m WHERE m.chatRoomEntity = :chatRoom AND m.isRead = false")
     int countUnreadMessages(@Param("chatRoom") ChatRoomEntity chatRoom);
 
     @Query("SELECT cm FROM ChatMessageEntity cm WHERE cm.chatRoomEntity = :chatRoomEntity ORDER BY cm.createdAt DESC")

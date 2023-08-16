@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pnu.cse.TayoTayo.TayoBE.dto.response.ChatMessageResponse;
 import pnu.cse.TayoTayo.TayoBE.dto.response.ChatRoomsResponse;
+import pnu.cse.TayoTayo.TayoBE.dto.response.SendChatResponse;
 import pnu.cse.TayoTayo.TayoBE.model.entity.ChatMessageEntity;
 import pnu.cse.TayoTayo.TayoBE.model.entity.ChatRoomEntity;
 import pnu.cse.TayoTayo.TayoBE.model.entity.MemberEntity;
@@ -60,7 +61,7 @@ public class ChatService {
 
     // MessageController의 sendMessage에 DB에 저장하는 곳에 구현 예정
     @Transactional
-    public void sendChatMessage(Long senderId, Long chatRoomId,String content){
+    public SendChatResponse sendChatMessage(Long senderId, Long chatRoomId, String content){
 
         // 1. ChatRoomEntity을 불러온다 TODO : 없으면 exception 처리
         Optional<ChatRoomEntity> chatRoom = chatRoomRepository.findById(chatRoomId);
@@ -83,6 +84,9 @@ public class ChatService {
 
         // 4. 메시지 save
         chatMessageRespository.save(newChatMessage);
+
+        // 5. return DTO
+        return new SendChatResponse(isCarOwner,content,newChatMessage.getCreatedAt());
 
     }
 
@@ -127,6 +131,8 @@ public class ChatService {
 
     @Transactional
     public ChatMessageResponse getMessages(Long userId , Long roomId){ // 아마도 headerId랑 유저 id
+
+        // TODO : 여기서 해당 userId가 해당 방에 속해있는 지 체크하는 과정 필요할 듯!
 
         // 1. 해당 유저가 존재하는 지 체크 (없으면 exception)
         MemberEntity member = memberRepository.findOne(userId);
@@ -173,8 +179,6 @@ public class ChatService {
 
         return new ChatMessageResponse(roomId,opponentNickName,isCarOwner,messages);
     }
-
-
 
 
 }

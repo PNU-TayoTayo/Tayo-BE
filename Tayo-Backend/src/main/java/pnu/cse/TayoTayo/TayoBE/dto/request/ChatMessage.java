@@ -11,14 +11,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ChatMessage {
 
-    private String sender;
-    private String receiver;
+    private Long senderId;
     private String content;
-
-    /*
-        @채팅 DB에는 sender, receiver, content, created_at?
-
-
-     */
 
 }

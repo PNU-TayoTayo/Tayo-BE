@@ -3,12 +3,16 @@ package pnu.cse.TayoTayo.TayoBE.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.util.HtmlUtils;
 import pnu.cse.TayoTayo.TayoBE.dto.request.ChatMessage;
+import pnu.cse.TayoTayo.TayoBE.dto.response.ChatMessageResponse;
+import pnu.cse.TayoTayo.TayoBE.dto.response.SendChatResponse;
+import pnu.cse.TayoTayo.TayoBE.service.ChatService;
 
 @Controller
 @RequiredArgsConstructor
@@ -16,31 +20,36 @@ import pnu.cse.TayoTayo.TayoBE.dto.request.ChatMessage;
 public class MessageController {
 
     private final SimpMessagingTemplate simpleMessagingTemplate;
+    private final ChatService chatService;
 
-    //  웹소켓 앤드포인트로 들어오는 소켓 통신의 경로 중, @MessageMapping 어노테이션으로 특정 경로로 들어오는 메세지들을 @SendTo 에 명시된 경로로 뿌려짐
-    // 즉, /app/chat/message/
-    @MessageMapping("/chat/message")
-    public void sendMessage(ChatMessage message) throws InterruptedException {
+    @MessageMapping("/send/{roomId}")
+    @SendTo("/topic/{roomId}")
+    public ChatMessageResponse.ChatMessages sendMessage(@Payload ChatMessage message, @DestinationVariable Long roomId) throws InterruptedException {
 
-        //TODO : 여기서 받은 메시지를 처리 !! (DB에 저장하는 방식등)
+        // 1. 채팅 내용 DB에 저장 (Long senderId, Long chatRoomId, String content 필요)
+        SendChatResponse sendChatResponse = chatService.sendChatMessage(message.getSenderId(), roomId, message.getContent());
 
-        simpleMessagingTemplate.convertAndSendToUser(message.getReceiver(), "/queue/chat", message.getContent());
-        simpleMessagingTemplate.convertAndSendToUser(message.getSender(), "/queue/chat", message.getContent());
+        // 2. 알림용 개인 큐에 전송 ! (response에서 꺼내야 함 <- 일단 보류)
+        //simpleMessagingTemplate.convertAndSendToUser();
+
+        // 3. 응답 메시지를 리턴하면 @SendTo 구독자에게 전달됨 (Boolean sentByCarOwner, String content, TimeStamp sentAt)
+        ChatMessageResponse.ChatMessages response = ChatMessageResponse.ChatMessages.builder()
+                .sentByCarOwner(sendChatResponse.isSentByCarOwner())
+                .content(sendChatResponse.getContent())
+                .sentAt(sendChatResponse.getSentAt())
+                .build();
+
+        return response;
     }
-}
+
     /*
-        간단하게 정리하면 먼저 사용자가 /ws/chat 엔드포인트에 WebSocket 연결을 하고
-        MessageController의 @MessageMapping 어노테이션을 사용하여 /app/chat/message에 메시지를 보낼 때
-        sendMessage 메서드가 호출됨 그러면 처리하고 SimpleBroker로 보냄
-        /user/{receiverSessionId}/queue/chat 이라는 개인큐로 도착함!
-
-        흠.. 로그인 시에 웹소켓 연결을 해둔다면..?? 로그인 API 호출 시
-        알람 같은게 ?
-
-        채팅을 sender receiver 정해져있음
-        receiver를 토픽으로 해야하나? 흠...
-
-        채팅방 말고 채팅 유저를 찾을까?? ..
-
-
+        1. 로그인 시에 먼저 /ws/chat 엔드포인트에 WebSocket 연결을 한다. ㅇ
+        2. 채팅 탭을 제외한 곳에서는 본인의 개인 큐만 구독한다. (/queue/{userId})
+            - 알림 용
+        3. 채팅 탭에서는 자신이 속한 모든 채팅 방을 조회한 후, 모든 방을 구독해야 한다. (/topic/{roomId})
+            - 실시간 채팅 용
+            - 메시지 보낼 때(sender,receiver,content)는 @MessageMapping("/chat/message/{roomId}")라
+                app/chat/{roomId}로 메시지를 보낸다.
      */
+}
+

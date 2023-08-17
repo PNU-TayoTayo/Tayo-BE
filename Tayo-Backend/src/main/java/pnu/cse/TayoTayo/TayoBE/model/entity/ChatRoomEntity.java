@@ -29,7 +29,7 @@ public class ChatRoomEntity { // 채팅방 느낌임
     private MemberEntity fromMember;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "to_user_id")
+    @JoinColumn(name = "to_member_id")
     private MemberEntity toMember;
 
     private String lastMessage;

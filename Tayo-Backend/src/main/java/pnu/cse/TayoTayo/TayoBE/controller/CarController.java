@@ -117,7 +117,7 @@ public class CarController {
         //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
     }
 
-    @Operation(summary = "차량 예약 신청 하기", description = "임차인이 차량 대여 신청을 하면 채팅방이 생성되는 API입니다.")
+    @Operation(summary = "차량 대여 신청 하기", description = "임차인이 차량 대여 신청을 하면 채팅방이 생성되는 API입니다.")
     @PostMapping("/detail/{carId}") // /tayo/car/detail/{carId}
     public void requestCar(Authentication authentication, @PathVariable Long carId){
 
@@ -127,16 +127,29 @@ public class CarController {
             - 요청하는 유저의 Id : fromMemberId
             - 해당 {carId}의 주인 유저의 Id : toMemberId
 
+            1. 임차인이 임대인한테 대여 신청을 했을 때, 임대인한테 알림이 감
+                -> {임차인 nickname} 님의 대여 신청이 왔어요!
          */
 
         //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
     }
 
     @Operation(summary = "차량 대여 승인 하기 (임대인)", description = "채팅방에서 임대인이 차량 대여 승인하는 API입니다.")
-    @PostMapping("/grant")
-    public void grantCar(Authentication authentication){
+    @PostMapping("/accept")
+    public void acceptCar(Authentication authentication){
 
-        // TODO : 흠... 이것도 ChainCode..??
+        // TODO : Boolean으로 수락/거절인지 받아야 할듯? + 어떤 차량인지
+
+        /*
+            TODO : 알림보내기
+               - 임대인이 대여 신청을 수락 했을 때, 임차인한테 알림이 감
+                  -> {임대인 nickname} 님이 대여신청을 수락했어요!
+               - 임대인이 대여 신청을 거절 했을 때, 임차인한테 알림이 감
+                  -> {임대인 nickname} 님이 대여신청을 수락했어요!
+
+            TODO : 채팅도 표시
+         */
+
 
         //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
     }
@@ -145,7 +158,10 @@ public class CarController {
     @PostMapping("/pay") // /tayo/car/pay
     public void payCar(Authentication authentication){
 
-        // TODO : 결제 ChainCode 실행
+        // TODO : 결제 ChainCode 실행 + 결제 알림 날리기!
+
+
+        //TODO : 채팅도 표시
 
         //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
     }

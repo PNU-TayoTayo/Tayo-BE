@@ -27,6 +27,8 @@ public class NotificationEntity {
     @JoinColumn(name = "from_member_id")
     private MemberEntity fromMember;
 
+    //private String fromMemberNickName; // 이게 편하긴 할 듯..
+
     @Enumerated(EnumType.STRING)
     private NotificationType notificationType;
 
@@ -50,6 +52,7 @@ public class NotificationEntity {
 
     @Builder
     public NotificationEntity(MemberEntity toMember, MemberEntity fromMember, NotificationType notificationType, ChatRoomEntity chatRoom) {
+        // TODO : 생성하면 자동으로 해당 값들 들어가는지 한번 테스트 해보기
         this.toMember = toMember;
         this.fromMember = fromMember;
         this.notificationType = notificationType;

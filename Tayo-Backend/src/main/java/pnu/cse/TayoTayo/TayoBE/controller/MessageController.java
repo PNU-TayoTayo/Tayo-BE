@@ -43,13 +43,25 @@ public class MessageController {
     }
 
     /*
-        1. 로그인 시에 먼저 /ws/chat 엔드포인트에 WebSocket 연결을 한다. ㅇ
+        1. 로그인 시에 먼저 /ws/chat 엔드포인트에 WebSocket 연결을 한다. (ws://localhost:8080/ws/chat)
         2. 채팅 탭을 제외한 곳에서는 본인의 개인 큐만 구독한다. (/queue/{userId})
             - 알림 용
         3. 채팅 탭에서는 자신이 속한 모든 채팅 방을 조회한 후, 모든 방을 구독해야 한다. (/topic/{roomId})
             - 실시간 채팅 용
             - 메시지 보낼 때(sender,receiver,content)는 @MessageMapping("/chat/message/{roomId}")라
-                app/chat/{roomId}로 메시지를 보낸다.
+                /app/send/1로 메시지를 보낸다.
+
+       흠... 알림도 굳이 실시간으로 할 필요가 있을까??
+
+       -신청 알림 조회 API도 하나 만들어야겠네
+
      */
 }
+
+/*
+    TODO : 문제점 unreadMessageCount 처리 관련 (고민...)
+        실시간으로 받고 읽고 있는 상황이면 ..?
+
+
+ */
 

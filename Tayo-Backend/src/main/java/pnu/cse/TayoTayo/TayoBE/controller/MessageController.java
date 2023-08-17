@@ -48,10 +48,9 @@ public class MessageController {
             - 알림 용
         3. 채팅 탭에서는 자신이 속한 모든 채팅 방을 조회한 후, 모든 방을 구독해야 한다. (/topic/{roomId})
             - 실시간 채팅 용
-            - 메시지 보낼 때(sender,receiver,content)는 @MessageMapping("/chat/message/{roomId}")라
-                /app/send/1로 메시지를 보낸다.
+            - 메시지 보낼 때(sender,receiver,content)는 @MessageMapping("/send/{roomId}")라
+                /app/send/{roomId}로 메시지를 보낸다.
 
-       흠... 알림도 굳이 실시간으로 할 필요가 있을까??
 
        -신청 알림 조회 API도 하나 만들어야겠네
 

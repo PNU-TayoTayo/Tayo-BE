@@ -14,4 +14,5 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoomEntity, Long> 
     @Query("SELECT cr FROM ChatRoomEntity cr WHERE cr.fromMember.id = :userId OR cr.toMember.id = :userId ORDER BY cr.updatedAt DESC")
     List<ChatRoomEntity> findByFromMemberOrToMemberOrderByCreatedAtDesc(@Param("userId") Long userId);
 
+
 }

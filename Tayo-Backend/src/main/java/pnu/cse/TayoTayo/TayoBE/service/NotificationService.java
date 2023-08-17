@@ -2,16 +2,21 @@ package pnu.cse.TayoTayo.TayoBE.service;
 
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pnu.cse.TayoTayo.TayoBE.dto.response.NotificationsResponse;
+import pnu.cse.TayoTayo.TayoBE.model.entity.ChatRoomEntity;
 import pnu.cse.TayoTayo.TayoBE.model.entity.MemberEntity;
 import pnu.cse.TayoTayo.TayoBE.model.entity.NotificationEntity;
+import pnu.cse.TayoTayo.TayoBE.model.entity.NotificationType;
+import pnu.cse.TayoTayo.TayoBE.repository.ChatRoomRepository;
 import pnu.cse.TayoTayo.TayoBE.repository.MemberRepository;
 import pnu.cse.TayoTayo.TayoBE.repository.NotificationRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,38 +25,11 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
 
     private final MemberRepository memberRepository;
+    
+    private final ChatRoomRepository chatRoomRepository;
 
-    /**
-     * 알림 DB에 저장되는 상황
-     * <p>
-     * 1. 임차인이 임대인한테 대여 신청을 했을 때, 임대인한테 알림이 감
-     * -> {임차인 nickname} 님의 대여 신청이 왔어요!
-     * <p>
-     * 2. 임대인이 대여 신청을 수락 했을 때, 임차인한테 알림이 감
-     * -> {임대인 nickname} 님이 대여신청을 수락했어요!
-     * <p>
-     * 3. 임대인이 대여 신청을 거절 했을 때, 임차인한테 알림이 감
-     * -> {임대인 nickname} 님이 대여신청을 수락했어요!
-     * <p>
-     * 4. 채팅이나 결제시에는?? (일단 보류)
-     * <p>
-     * 알림 DB에 필요한 변수들
-     * <p>
-     * 1. 알림 PKId ㅇ
-     * 2. 알림받을 UserId(receiverId) -> nickName ㅇ
-     * 3. isRead -> 언제 알림을 Read 처리 해줘야할까? ㅇ
-     * 후보 1: 채팅방 목록 조회했을 때..?
-     * 후보 2: 한번이라도 로그인 했을 때..?
-     * 후보 3: 해당 채팅방에 입장했을 떄..?
-     * 4. 채팅방 Id
-     * 5. notificationType(임차인의 대여 요청) ㅇ
-     * 6. 날짜 (요청한 날짜 x)
-     * <p>
-     * 채팅방에도 해당 등록된 거래Id가 필요할려나??
-     * 등록된걸 조회하게 되면 해당 등록된 차량의 Id가 있자나
-     *
-     * @return
-     */
+    private final SimpMessagingTemplate simpleMessagingTemplate;
+
 
     @Transactional
     public NotificationsResponse getNotifications(Long userId){
@@ -77,8 +55,64 @@ public class NotificationService {
         }
 
         return new NotificationsResponse(userId, unreadNotifications.size(), notifications);
+    }
 
+
+    // 해당 메소드는 테스트 용임
+    @Transactional
+    public void createNotification(Long fromUserId, Long chatRoomId , NotificationType type){
+
+        /*
+            [알림이 생성되는 상황]
+
+            1. 임차인이 임대인한테 대여 신청을 했을 때(채팅방 생성), 임대인한테 알림이 감 (차량검색 페이지)
+            2. 임대인이 대여 신청을 수락 했을 때, 임차인한테 알림이 감 (채팅방 페이지)
+            3. 임대인이 대여 신청을 거절 했을 때, 임차인한테 알림이 감 (채팅방 페이지)
+            4. 임차인이 결제를 하면 임대인한테 알림이 감 (채팅방 페이지)
+
+            믿을 수 있는 데이터는 fromUserId 뿐인 toUserId랑 chatRoomId는 흠...
+         */
+        
+        // 1. 본인, 상대방, 채팅방 객체 들고오기
+        MemberEntity fromMember = memberRepository.findOne(fromUserId);
+        MemberEntity toMember;
+        Optional<ChatRoomEntity> chatRoom = chatRoomRepository.findById(chatRoomId);
+
+        if(chatRoom.get().getToMember().equals(fromMember)){ // 상대방 Member 객체 가져오기
+            toMember = chatRoom.get().getFromMember();
+        }else{
+            toMember = chatRoom.get().getToMember();
+        }
+
+
+        // 2. Notification Entity 생성 후 저장
+        NotificationEntity n = NotificationEntity.builder()
+                .fromMember(fromMember)
+                .toMember(toMember)
+                .notificationType(type)
+                .chatRoom(chatRoom.get())
+                .build();
+        notificationRepository.save(n);
+
+        // 3. toMember의 개인큐에 실시간 알림 보내기
+        String destination = "queue/" + toMember.getId();
+        NotificationsResponse.Notification message = NotificationsResponse.Notification.builder()
+                .opponentNickName(fromMember.getNickName())
+                .notificationType(type)
+                .chatRoomId(chatRoom.get().getId())
+                .build();
+
+        simpleMessagingTemplate.convertAndSend("/queue/user/"+toMember.getId(),message);
+
+        // 4. 일단 return 값은 정의 x
     }
 
 
 }
+
+        /*
+         Notification의 isRead -> 언제 알림을 Read 처리 해줘야할까? ㅇ
+            후보 1: 채팅방 목록 조회했을 때..?
+            후보 2: 한번이라도 로그인 했을 때..?
+            후보 3: 해당 채팅방에 입장했을 떄..?
+         */

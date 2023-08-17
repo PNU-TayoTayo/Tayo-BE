@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import pnu.cse.TayoTayo.TayoBE.config.security.CustomUserDetails;
+import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
 import pnu.cse.TayoTayo.TayoBE.dto.response.NotificationsResponse;
 import pnu.cse.TayoTayo.TayoBE.dto.response.Response;
 import pnu.cse.TayoTayo.TayoBE.service.NotificationService;
@@ -27,6 +28,17 @@ public class NotificationController{
 
         return Response.success("성공적으로 알림 조회에 성공하셨습니다", response);
     }
+
+
+    // 테스트 용 알림 만들기 !
+    @PostMapping
+    public void createTestNotification(Authentication authentication, @RequestBody MemberRequest.createTestNotificationRequest request){
+
+        notificationService.createNotification(((CustomUserDetails) authentication.getPrincipal()).getId(),request.getChatRoomId(), request.getType());
+
+    }
+
+
 
 
 

@@ -27,13 +27,17 @@ public class GlobalControllerAdvice {
                 .body(Response.error(e.getErrorCode().getMessage(),data));
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<?> applicationHandler(RuntimeException e){
-        log.error("Error occurs {}", e.toString());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Response.error("Internal Server Error",ErrorCode.INTERNAL_SERVER_ERROR.name()));
-
-    }
+//    @ExceptionHandler(RuntimeException.class)
+//    public ResponseEntity<?> applicationHandler(RuntimeException e){
+//        log.error("Error occurs {}", e.toString());
+//        log.error(e.getMessage());
+//        log.error(e.getLocalizedMessage());
+//        log.error(String.valueOf(e.getStackTrace()));
+//
+//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                .body(Response.error("Internal Server Error",ErrorCode.INTERNAL_SERVER_ERROR.name()));
+//
+//    }
 
 
 }

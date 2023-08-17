@@ -5,12 +5,20 @@ import lombok.Setter;
 import lombok.ToString;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.multipart.MultipartFile;
+import pnu.cse.TayoTayo.TayoBE.model.entity.NotificationType;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 
 public class MemberRequest {
+
+    @Getter
+    @Setter
+    public static class createTestNotificationRequest{
+        private Long chatRoomId;
+        private NotificationType type;
+    }
 
     @Getter
     @Setter

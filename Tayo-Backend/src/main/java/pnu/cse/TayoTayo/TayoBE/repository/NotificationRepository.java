@@ -18,6 +18,10 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
     //      해당 유저의 nickname
     @Query("SELECT n FROM NotificationEntity n WHERE n.toMember = :toMember AND n.isRead = false")
     List<NotificationEntity> findUnreadNotificationsByToMember(MemberEntity toMember);
-    
+
+    // toMember랑 채팅방 받아서 isRead가 false인게 있으면 true로 바꿔주기
+    @Query("SELECT n FROM NotificationEntity n WHERE n.toMember = :toMember AND n.chatRoom = :chatRoom AND  n.isRead = false")
+    List<NotificationEntity> findUnreadNotificationsByToMemberAndChatRoom(MemberEntity toMember, ChatRoomEntity chatRoom);
+
 
 }

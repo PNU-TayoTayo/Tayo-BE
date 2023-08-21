@@ -13,7 +13,6 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
-
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         // 메시지 받을 때 관련 경로 설정 (SimpleBroker - 내장 브로커 사용)
@@ -24,10 +23,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // 메시지 핸들러로 라우팅 되는 Prefix
         registry.setApplicationDestinationPrefixes("/app");
     }
-
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry){
         // Client에서 websocket 연결할 때, 사용할 API 경로를 설정
-        registry.addEndpoint("/ws/chat").setAllowedOriginPatterns("*"); //.withSockJS()
+        registry.addEndpoint("/ws/chat")
+                .setAllowedOriginPatterns("*"); //.withSockJS()
     }
 }

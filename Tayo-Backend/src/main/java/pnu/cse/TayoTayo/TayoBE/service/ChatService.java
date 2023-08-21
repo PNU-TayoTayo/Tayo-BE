@@ -10,9 +10,11 @@ import pnu.cse.TayoTayo.TayoBE.dto.response.SendChatResponse;
 import pnu.cse.TayoTayo.TayoBE.model.entity.ChatMessageEntity;
 import pnu.cse.TayoTayo.TayoBE.model.entity.ChatRoomEntity;
 import pnu.cse.TayoTayo.TayoBE.model.entity.MemberEntity;
+import pnu.cse.TayoTayo.TayoBE.model.entity.NotificationEntity;
 import pnu.cse.TayoTayo.TayoBE.repository.ChatRoomRepository;
 import pnu.cse.TayoTayo.TayoBE.repository.ChatMessageRespository;
 import pnu.cse.TayoTayo.TayoBE.repository.MemberRepository;
+import pnu.cse.TayoTayo.TayoBE.repository.NotificationRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +28,8 @@ public class ChatService {
     private final ChatMessageRespository chatMessageRespository;
 
     private final ChatRoomRepository chatRoomRepository;
+    
+    private final NotificationRepository notificationRepository;
 
 
 
@@ -132,14 +136,18 @@ public class ChatService {
     @Transactional
     public ChatMessageResponse getMessages(Long userId , Long roomId){ // 아마도 headerId랑 유저 id
 
-        // TODO : 여기서 해당 userId가 해당 방에 속해있는 지 체크하는 과정 필요할 듯!
-
         // 1. 해당 유저가 존재하는 지 체크 (없으면 exception)
         MemberEntity member = memberRepository.findOne(userId);
 
         // 2. 해당 headerId를 가진 모든 메시지 들고오기
         ChatRoomEntity chatRoom = chatRoomRepository.findById(roomId).get();
         List<ChatMessageEntity> chatMessages = chatRoom.getChatMessageEntities();
+        
+        // 안읽은 알림있으면 읽음 처리하기
+        List<NotificationEntity> no = notificationRepository.findUnreadNotificationsByToMemberAndChatRoom(member, chatRoom);
+        for(NotificationEntity n : no){
+            n.setIsRead(true);
+        }
 
         // 3. 가지고 온 메시지들로 responseDTO 만들어서 Controller로 보내기 (ChatMessageResponse)
 

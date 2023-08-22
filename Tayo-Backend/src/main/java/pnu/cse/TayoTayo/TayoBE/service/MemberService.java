@@ -34,6 +34,8 @@ public class MemberService {
 
     private final PoolAndWalletManager poolAndWalletManager;
 
+    private final JWTProvider jwtProvider;
+
     /**
      *  회원 가입
      */
@@ -88,7 +90,7 @@ public class MemberService {
         Authentication authentication = authenticationManager.authenticate(usernamePasswordAuthenticationToken);
         CustomUserDetails myUserDetails = (CustomUserDetails) authentication.getPrincipal();
 
-        String jwt = JWTProvider.createAccessToken(myUserDetails.getMember());
+        String jwt = jwtProvider.createAccessToken(myUserDetails.getMember());
 
 
         Member member = Member.fromEntity(myUserDetails.getMember(), jwt);

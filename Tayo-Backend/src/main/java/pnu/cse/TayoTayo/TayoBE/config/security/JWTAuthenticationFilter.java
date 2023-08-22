@@ -3,6 +3,7 @@ package pnu.cse.TayoTayo.TayoBE.config.security;
 import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -10,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.stereotype.Component;
 import pnu.cse.TayoTayo.TayoBE.model.entity.MemberEntity;
 import pnu.cse.TayoTayo.TayoBE.model.entity.MemberRole;
 
@@ -20,10 +22,14 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @Slf4j
+@Component
 public class JWTAuthenticationFilter extends BasicAuthenticationFilter {
 
-    public JWTAuthenticationFilter(AuthenticationManager authenticationManager) {
+    private final JWTProvider jwtProvider;
+
+    public JWTAuthenticationFilter(AuthenticationManager authenticationManager, JWTProvider jwtProvider) {
         super(authenticationManager);
+        this.jwtProvider = jwtProvider;
     }
 
     @Override
@@ -37,7 +43,8 @@ public class JWTAuthenticationFilter extends BasicAuthenticationFilter {
 
         try {
             // 여기서 올바른 JWT인지 체크
-            DecodedJWT decodedJWT = JWTProvider.verify(prefixJwt);
+            //DecodedJWT decodedJWT = JWTProvider.verify(prefixJwt);
+            DecodedJWT decodedJWT = jwtProvider.verify(prefixJwt);
 
             Long id = decodedJWT.getClaim("id").asLong();
             String role = decodedJWT.getClaim("role").asString();

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import pnu.cse.TayoTayo.TayoBE.dto.request.ChatMessage;
 import pnu.cse.TayoTayo.TayoBE.dto.response.ChatMessageResponse;
 import pnu.cse.TayoTayo.TayoBE.dto.response.SendChatResponse;
+import pnu.cse.TayoTayo.TayoBE.model.ConnectState;
 import pnu.cse.TayoTayo.TayoBE.service.ChatService;
 
 @Controller
@@ -22,15 +23,29 @@ public class MessageController {
     private final SimpMessagingTemplate simpleMessagingTemplate;
     private final ChatService chatService;
 
+    private final ConnectState connectState;
+
     @MessageMapping("/send/{roomId}")
     @SendTo("/topic/{roomId}")
     public ChatMessageResponse.ChatMessages sendMessage(@Payload ChatMessage message, @DestinationVariable Long roomId) throws InterruptedException {
 
+        // 0. 상대방 접속 여부 파악
+        // 메시지 보냈을 때, 상대 유저가 같은 방에 있따
+        boolean isRead;
+        if(connectState.getUserCount(roomId)==2){
+            isRead = true;
+        }else{
+            isRead = false;
+        }
+        log.info("isRead값 : " +isRead);
+
         // 1. 채팅 내용 DB에 저장 (Long senderId, Long chatRoomId, String content 필요)
-        SendChatResponse sendChatResponse = chatService.sendChatMessage(message.getSenderId(), roomId, message.getContent());
+        SendChatResponse sendChatResponse = chatService.sendChatMessage(message.getSenderId(), roomId, message.getContent(),isRead);
+        System.out.println("어디가 문제지 ? 1");
 
         // 2. 알림용 개인 큐에 전송 ! (response에서 꺼내야 함 <- 일단 보류)
         //simpleMessagingTemplate.convertAndSendToUser();
+
 
         // 3. 응답 메시지를 리턴하면 @SendTo 구독자에게 전달됨 (Boolean sentByCarOwner, String content, TimeStamp sentAt)
         ChatMessageResponse.ChatMessages response = ChatMessageResponse.ChatMessages.builder()

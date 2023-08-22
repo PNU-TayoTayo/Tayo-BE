@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import pnu.cse.TayoTayo.TayoBE.dto.response.ChatMessageResponse;
 import pnu.cse.TayoTayo.TayoBE.dto.response.ChatRoomsResponse;
 import pnu.cse.TayoTayo.TayoBE.dto.response.SendChatResponse;
+import pnu.cse.TayoTayo.TayoBE.model.ConnectState;
 import pnu.cse.TayoTayo.TayoBE.model.entity.ChatMessageEntity;
 import pnu.cse.TayoTayo.TayoBE.model.entity.ChatRoomEntity;
 import pnu.cse.TayoTayo.TayoBE.model.entity.MemberEntity;
@@ -30,6 +31,8 @@ public class ChatService {
     private final ChatRoomRepository chatRoomRepository;
     
     private final NotificationRepository notificationRepository;
+
+    private final ConnectState connectState;
 
 
 
@@ -65,7 +68,7 @@ public class ChatService {
 
     // MessageController의 sendMessage에 DB에 저장하는 곳에 구현 예정
     @Transactional
-    public SendChatResponse sendChatMessage(Long senderId, Long chatRoomId, String content){
+    public SendChatResponse sendChatMessage(Long senderId, Long chatRoomId, String content,boolean isRead){
 
         // 1. ChatRoomEntity을 불러온다 TODO : 없으면 exception 처리
         Optional<ChatRoomEntity> chatRoom = chatRoomRepository.findById(chatRoomId);
@@ -83,6 +86,7 @@ public class ChatService {
         ChatMessageEntity newChatMessage = ChatMessageEntity.builder()
                 .sentByCarOwner(isCarOwner)
                 .content(content)
+                .isRead(isRead)
                 .build();
         chatRoom.get().addChatMessage(newChatMessage);
 
@@ -97,8 +101,6 @@ public class ChatService {
 
     @Transactional
     public ChatRoomsResponse getChatRooms(Long userId){
-        //TODO : 여기서 애매한건 만약 새로 메시지가 오면 API를 다시 호출하는건가? (채팅 목록 관리 및 실시간 업데이트)
-        //            =>  프론트쪽에 물어봐야할듯 (마지막 메시지와 안읽은 채팅 수 채팅방 목록 조회 갱신 어떻게 ??)
 
         // 1. 해당 유저가 존재하는 지 체크
         MemberEntity member = memberRepository.findOne(userId);
@@ -110,12 +112,14 @@ public class ChatService {
         List<ChatRoomsResponse.ChatRooms> cr = new ArrayList<>();
 
         for(ChatRoomEntity chatRoom : chatRooms){
-
+            boolean isCarOwner;
             String opponentNickName;
-            if(chatRoom.getFromMember().equals(member)){
+            if(chatRoom.getFromMember().equals(member)){ //
                 opponentNickName = chatRoom.getToMember().getNickName();
+                isCarOwner = false;
             }else{
                 opponentNickName = chatRoom.getFromMember().getNickName();
+                isCarOwner = true;
             }
 
             ChatRoomsResponse.ChatRooms chatRoomsResponse = ChatRoomsResponse.ChatRooms.builder()
@@ -123,7 +127,7 @@ public class ChatService {
                     .opponentNickName(opponentNickName)
                     .lastMessage(chatRoom.getLastMessage())
                     //.lastMessage(chatMessageRespository.findMostRecentMessageByChatRoom(chatRoom).getContent())
-                    .unreadMessageCount(chatMessageRespository.countUnreadMessages(chatRoom))
+                    .unreadMessageCount(chatMessageRespository.countUnreadMessages(chatRoom,!isCarOwner))
                     .build();
             cr.add(chatRoomsResponse);
         }
@@ -134,7 +138,7 @@ public class ChatService {
 
 
     @Transactional
-    public ChatMessageResponse getMessages(Long userId , Long roomId){ // 아마도 headerId랑 유저 id
+    public ChatMessageResponse getMessages(Long userId , Long roomId){
 
         // 1. 해당 유저가 존재하는 지 체크 (없으면 exception)
         MemberEntity member = memberRepository.findOne(userId);
@@ -142,8 +146,11 @@ public class ChatService {
         // 2. 해당 headerId를 가진 모든 메시지 들고오기
         ChatRoomEntity chatRoom = chatRoomRepository.findById(roomId).get();
         List<ChatMessageEntity> chatMessages = chatRoom.getChatMessageEntities();
-        
-        // 안읽은 알림있으면 읽음 처리하기
+
+        // 3. 유저 접속상태
+        connectState.addUserRoom(userId,roomId);
+
+        // 4. 안읽은 알림있으면 읽음 처리하기
         List<NotificationEntity> no = notificationRepository.findUnreadNotificationsByToMemberAndChatRoom(member, chatRoom);
         for(NotificationEntity n : no){
             n.setIsRead(true);

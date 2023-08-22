@@ -34,14 +34,15 @@ public class ChatMessageEntity {
     @PrePersist
     void registeredAt(){
         this.createdAt = Timestamp.from(Instant.now());
-        this.isRead = false;
+        //this.isRead = false;
     }
 
     @Builder
-    public ChatMessageEntity(Boolean sentByCarOwner, String content) {
+    public ChatMessageEntity(Boolean sentByCarOwner, String content, boolean isRead) {
         //this.id = id;
         this.sentByCarOwner = sentByCarOwner;
         this.content = content;
+        this.isRead = isRead;
     }
 }
 

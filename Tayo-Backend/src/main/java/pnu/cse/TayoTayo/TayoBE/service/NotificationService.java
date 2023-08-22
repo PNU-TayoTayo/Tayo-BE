@@ -6,6 +6,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pnu.cse.TayoTayo.TayoBE.dto.response.NotificationsResponse;
+import pnu.cse.TayoTayo.TayoBE.model.ConnectState;
 import pnu.cse.TayoTayo.TayoBE.model.entity.ChatRoomEntity;
 import pnu.cse.TayoTayo.TayoBE.model.entity.MemberEntity;
 import pnu.cse.TayoTayo.TayoBE.model.entity.NotificationEntity;
@@ -29,6 +30,8 @@ public class NotificationService {
     private final ChatRoomRepository chatRoomRepository;
 
     private final SimpMessagingTemplate simpleMessagingTemplate;
+
+    private final ConnectState connectState;
 
 
     @Transactional
@@ -72,6 +75,14 @@ public class NotificationService {
 
             믿을 수 있는 데이터는 fromUserId 뿐인 toUserId랑 chatRoomId는 흠...
          */
+
+        boolean isRead;
+        if(connectState.getUserCount(chatRoomId)==2){
+            isRead = true;
+        }else{
+            isRead = false;
+        }
+
         
         // 1. 본인, 상대방, 채팅방 객체 들고오기
         MemberEntity fromMember = memberRepository.findOne(fromUserId);
@@ -91,6 +102,7 @@ public class NotificationService {
                 .toMember(toMember)
                 .notificationType(type)
                 .chatRoom(chatRoom.get())
+                .isRead(isRead)
                 .build();
         notificationRepository.save(n);
 

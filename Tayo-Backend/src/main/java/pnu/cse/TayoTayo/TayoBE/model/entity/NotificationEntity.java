@@ -47,15 +47,16 @@ public class NotificationEntity {
     @PrePersist
     void registeredAt(){
         this.createdAt = Timestamp.from(Instant.now());
-        this.isRead = false;
+        //this.isRead = false;
     }
 
     @Builder
-    public NotificationEntity(MemberEntity toMember, MemberEntity fromMember, NotificationType notificationType, ChatRoomEntity chatRoom) {
+    public NotificationEntity(MemberEntity toMember, MemberEntity fromMember, NotificationType notificationType, ChatRoomEntity chatRoom, boolean isRead) {
         // TODO : 생성하면 자동으로 해당 값들 들어가는지 한번 테스트 해보기
         this.toMember = toMember;
         this.fromMember = fromMember;
         this.notificationType = notificationType;
         this.chatRoom = chatRoom;
+        this.isRead = isRead;
     }
 }

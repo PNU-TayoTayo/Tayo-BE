@@ -57,7 +57,11 @@ dependencies {
 	implementation("org.apache.commons:commons-lang3:3.12.0")
 	implementation("commons-io:commons-io:2.11.0")
 	implementation("org.json:json:20230227")
-	implementation("org.hyperledger:indy:1.15.0")
+	implementation("org.hyperledger:indy:1.16.0")
+
+	// hyperledger fabric-gateway
+	implementation 'org.hyperledger.fabric:fabric-gateway:1.3.0'
+	implementation 'io.grpc:grpc-netty-shaded:1.56.0'
 }
 
 tasks.named('test') {

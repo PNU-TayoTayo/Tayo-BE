@@ -9,9 +9,11 @@ import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import org.hyperledger.fabric.client.*;
 import org.hyperledger.fabric.client.identity.*;
+import pnu.cse.TayoTayo.TayoBE.model.Car;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -86,10 +88,19 @@ public class TayoConnect {
         }
     }
 
-    public JsonElement QueryAllCars() throws GatewayException {
+    /* 차량 관련 체인코드 실행 */
+    //
+    public JsonElement queryAllCars() throws GatewayException {
         var result = contract.evaluateTransaction("QueryAllCars");
         System.out.println(prettyJson(result));
         return prettyJson(result);
+    }
+
+    // 차량 등록
+    public void createCar(Car car) throws GatewayException, CommitException {
+        String carJson = gson.toJson(car);
+        byte[] carAsBytes = carJson.getBytes(StandardCharsets.UTF_8);
+        contract.submitTransaction("CreateCar", carAsBytes);
     }
 
     private JsonElement prettyJson(final byte[] json) {

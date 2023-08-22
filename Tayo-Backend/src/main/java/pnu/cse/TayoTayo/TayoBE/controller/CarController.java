@@ -1,16 +1,22 @@
 package pnu.cse.TayoTayo.TayoBE.controller;
 
 
+import com.google.gson.JsonElement;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.hyperledger.indy.sdk.IndyException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 import pnu.cse.TayoTayo.TayoBE.config.security.CustomUserDetails;
+import pnu.cse.TayoTayo.TayoBE.connect.TayoConnect;
 import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
+import pnu.cse.TayoTayo.TayoBE.dto.response.Response;
+import pnu.cse.TayoTayo.TayoBE.model.Car;
 import pnu.cse.TayoTayo.TayoBE.service.CarService;
 
+import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
 @Tag(name = "tayo-api", description = "타요타요 API")
@@ -66,6 +72,25 @@ public class CarController {
         // TODO : 여긴 그냥 체인 코드 실행시키면 될듯..?
 
         //return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
+    }
+
+    @Operation(summary = "전체 자동차 조회", description = "전체 자동차를 조회하는 API입니다.")
+    @GetMapping("/testquery")
+    public Response<Void> testQuery() throws Exception {
+        TayoConnect tayoConnect = new TayoConnect(1);
+        JsonElement cars = tayoConnect.queryAllCars();
+
+        return Response.success("차량 조회 결과" + cars.toString());
+    }
+
+    @Operation(summary = "차량 등록하기", description = "차량을 등록하는 API입니다.")
+    @PostMapping("/testCreate")
+    public Response<Void> testCreate() throws Exception {
+        TayoConnect tayoConnect = new TayoConnect(1);
+        Car car = new Car(10, 100, "Sedan", "V6", "2023-08-23", 0, "", new ArrayList<>(), "", "", 0.0, 0.0, false, 0);
+        tayoConnect.createCar(car);
+
+        return Response.success("차량 등록 결과" + car);
     }
 
 }

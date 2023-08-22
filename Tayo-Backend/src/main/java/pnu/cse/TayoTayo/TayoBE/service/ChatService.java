@@ -136,6 +136,11 @@ public class ChatService {
 
     }
 
+    @Transactional
+    public void leaveRoom(Long userId){
+        // TODO : 여기서 유저 접속상태 수정
+        connectState.deleteUserRoom(userId);
+    }
 
     @Transactional
     public ChatMessageResponse getMessages(Long userId , Long roomId){

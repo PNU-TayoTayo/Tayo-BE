@@ -4,21 +4,14 @@ package pnu.cse.TayoTayo.TayoBE.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.messaging.handler.annotation.DestinationVariable;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.handler.annotation.SendTo;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import pnu.cse.TayoTayo.TayoBE.config.security.CustomUserDetails;
 
-import pnu.cse.TayoTayo.TayoBE.dto.request.ChatMessage;
 import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
 import pnu.cse.TayoTayo.TayoBE.dto.response.ChatMessageResponse;
 import pnu.cse.TayoTayo.TayoBE.dto.response.ChatRoomsResponse;
 import pnu.cse.TayoTayo.TayoBE.dto.response.Response;
-import pnu.cse.TayoTayo.TayoBE.dto.response.SendChatResponse;
 import pnu.cse.TayoTayo.TayoBE.service.ChatService;
 
 @Tag(name = "tayo-api", description = "타요타요 API")
@@ -45,6 +38,16 @@ public class ChatController {
         ChatMessageResponse response = chatService.getMessages(((CustomUserDetails) authentication.getPrincipal()).getId(), roomId);
 
         return Response.success("채팅방 과거 내용을 성공적으로 조회하였습니다.", response);
+    }
+
+    @Operation(summary = "채팅방 방나갈때 호출하는 API", description = "유저가 특정 채팅방을 나갈때 해당 api를 호출하여 접속상태를 관리합니다.")
+    @GetMapping("/leave") // @GetMapping("/leave/{roomId}")
+    public Response<Object> leaveRoom(Authentication authentication) {
+
+        chatService.leaveRoom(((CustomUserDetails) authentication.getPrincipal()).getId());
+        //ChatMessageResponse response = chatService.getMessages(((CustomUserDetails) authentication.getPrincipal()).getId(), roomId);
+
+        return Response.success("채팅방 성공적으로 나갔습니다.", null);
     }
 
 

@@ -83,4 +83,8 @@ public class ConnectState {
         }
     }
 
+    // 방 나가면 어떻게 되는거지??
+    // userRooms에서 userId, roomId 삭제하고
+    // userCount에서 roomId, count - 1
+
 }

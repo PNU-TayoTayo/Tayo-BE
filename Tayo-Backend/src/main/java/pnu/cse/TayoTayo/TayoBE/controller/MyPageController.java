@@ -29,13 +29,14 @@ public class MyPageController {
         return Response.success("본인 정보를 성공적으로 조회하셨습니다.", MemberInfoResponse.fromMember(member));
     }
 
-    // TODO : 회원 탈퇴시 지갑 삭제도 해줘야 함!
-    //          강제로 지갑 파일을 삭제해주는 식으로 해야할 듯????
+
 
     @Operation(summary = "회원 탈퇴", description = "회원 탈퇴하는 API입니다.")
     @DeleteMapping
     public Response<Void> deleteMember(Authentication authentication, @RequestBody MemberRequest.DeleteMemberRequest request){
 
+        // TODO : 회원 탈퇴시 지갑 삭제도 해줘야 함!
+        //          강제로 지갑 파일을 삭제해주는 식으로 해야할 듯????
         myPageService.deleteMember(((CustomUserDetails) authentication.getPrincipal()).getId(),request.getCurrentPassword());
 
         return Response.success("회원 탈퇴에 성공하셨습니다.");
@@ -62,6 +63,44 @@ public class MyPageController {
     }
 
 
+
+
+
+
+
+
+    // ======================================이 밑에 구현 전 =======================================
+    @Operation(summary = "현재 잔액 조회", description = "현재 잔액을 조회하는 API입니다.")
+    @GetMapping("/money")
+    public void getMoney(Authentication authentication){
+
+
+        //return Response.success("한줄 소개 수정에 성공하셨습니다.", MemberIntroResponse.fromMember(member));
+    }
+
+    @Operation(summary = "잔액 채우기", description = "잔액 채우는 API입니다.")
+    @PostMapping("/deposit")
+    public void depositMoney(Authentication authentication){
+
+
+        //return Response.success("한줄 소개 수정에 성공하셨습니다.", MemberIntroResponse.fromMember(member));
+    }
+
+    @Operation(summary = "출금하기", description = "출금하는 API입니다.")
+    @PostMapping("/withdraw")
+    public void withdrawMoney(Authentication authentication){
+
+
+        //return Response.success("한줄 소개 수정에 성공하셨습니다.", MemberIntroResponse.fromMember(member));
+    }
+
+    @Operation(summary = "최근 거래 내역 조회", description = "최근 거래 내역 조회하는 API입니다.")
+    @GetMapping("/recent")
+    public void recentTransaction(Authentication authentication){
+
+
+        //return Response.success("한줄 소개 수정에 성공하셨습니다.", MemberIntroResponse.fromMember(member));
+    }
 
 
 

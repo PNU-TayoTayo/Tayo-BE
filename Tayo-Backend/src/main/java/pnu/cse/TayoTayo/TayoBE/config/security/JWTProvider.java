@@ -17,7 +17,7 @@ public class JWTProvider {
     public static final String HEADER = "Authorization";
     public static final String SECRET = "TayoKey";
 
-    public static String createAccessToken(MemberEntity member) {
+    public String createAccessToken(MemberEntity member) {
         // 토큰은 데이터 담을 수 있음 (민감한 정보는 넣으면 x)
         String jwt = JWT.create()
                 .withSubject(member.getEmail()) // jwt의 이름 설정
@@ -38,7 +38,7 @@ public class JWTProvider {
 //                .sign(Algorithm.HMAC512(SECRET));
 //    }
 
-    public static DecodedJWT verify(String jwt) throws SignatureVerificationException, TokenExpiredException {
+    public DecodedJWT verify(String jwt) throws SignatureVerificationException, TokenExpiredException {
         jwt = jwt.replace(JWTProvider.TOKEN_PREFIX, "");
         DecodedJWT decodedJWT = JWT.require(Algorithm.HMAC512(SECRET))
                 .build().verify(jwt);

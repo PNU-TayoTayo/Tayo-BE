@@ -11,11 +11,18 @@ import org.hyperledger.indy.sdk.ledger.LedgerResults;
 import org.hyperledger.indy.sdk.wallet.Wallet;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pnu.cse.TayoTayo.TayoBE.connect.TayoConnect;
-import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
 import pnu.cse.TayoTayo.TayoBE.model.Car;
+import org.springframework.web.multipart.MultipartFile;
+import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
+import pnu.cse.TayoTayo.TayoBE.dto.response.CreateVCResponse;
+import pnu.cse.TayoTayo.TayoBE.dto.response.MyVCResponse;
+import pnu.cse.TayoTayo.TayoBE.dto.response.RegisterCarResponse;
+import pnu.cse.TayoTayo.TayoBE.exception.ApplicationException;
+import pnu.cse.TayoTayo.TayoBE.exception.ErrorCode;
 import pnu.cse.TayoTayo.TayoBE.model.Member;
 import pnu.cse.TayoTayo.TayoBE.model.entity.MemberEntity;
 import pnu.cse.TayoTayo.TayoBE.repository.MemberRepository;
@@ -23,6 +30,7 @@ import pnu.cse.TayoTayo.TayoBE.util.PoolAndWalletManager;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -35,7 +43,10 @@ public class CarService {
 
     private final PoolAndWalletManager poolAndWalletManager;
 
+    private final S3Uploader s3Uploader;
 
+    @Value("${VCService.issuer.DID}")
+    private String issuerDID;
 
     /**
      * 1. id랑 지갑 비번을 받아서 그걸로 wallet open ㅇ
@@ -54,63 +65,102 @@ public class CarService {
      */
 
     @Transactional
-    public void createVC(Long Id , String walletPassword) throws IndyException, ExecutionException, InterruptedException {
+    public String createVC(Long Id , String walletPassword, String carNumber) throws IndyException, ExecutionException, InterruptedException {
 
-        MemberEntity member = memberRepository.findOne(Id);
+        Wallet memberWallet = null;
 
-        Wallet memberWallet = poolAndWalletManager.openUserWallet(member.getEmail(), walletPassword);
+        try {
+            MemberEntity member = memberRepository.findOne(Id);
 
-        String carDID = poolAndWalletManager.createCarDID(memberWallet,member);
+            memberWallet = poolAndWalletManager.openUserWallet(member.getEmail(), walletPassword);
 
-        String credentialOffer = poolAndWalletManager.getCredentialOfferFromVCService(member.getId(),memberWallet);
+            String carDID = poolAndWalletManager.createCarDID(memberWallet, member);
 
-        System.out.println("\n해당 유저가 VC 생성에 필요한 Master Secret을 생성하고 본인의 지갑에 저장");
+            String credentialOffer = poolAndWalletManager.getCredentialOfferFromVCService(member.getId(), memberWallet);
 
-        //String MasterSecretId = Anoncreds.proverCreateMasterSecret(memberWallet, null).get();
-        String MasterSecretId = member.getWalletMasterKey();
+            System.out.println("\n해당 유저가 VC 생성에 필요한 Master Secret을 생성하고 본인의 지갑에 저장");
 
-        System.out.println("\n 해당 유저는 레저로부터 Credential Definition를 가져온다");
-        LedgerResults.ParseResponseResult parsedCredDefResponse =
-                poolAndWalletManager.getCredDef(carDID, new JSONObject(credentialOffer).getString("cred_def_id").toString());
+            //String MasterSecretId = Anoncreds.proverCreateMasterSecret(memberWallet, null).get();
+            String MasterSecretId = member.getWalletMasterKey();
 
-        // 여기서 Credential request 매개변수로 AliceWallet, AliceDID, Credential Offer, Credential Definition, Master Secret ID
-        System.out.println("\n해당 유저는 VC생성을 위해 Issuer에게 보낼 transcript credential request를 준비한다");
-        AnoncredsResults.ProverCreateCredentialRequestResult credentialRequestResult =
-                Anoncreds.proverCreateCredentialReq(memberWallet, carDID, credentialOffer,
-                        parsedCredDefResponse.getObjectJson(), MasterSecretId).get();
+            System.out.println("\n 해당 유저는 레저로부터 Credential Definition를 가져온다");
+            LedgerResults.ParseResponseResult parsedCredDefResponse =
+                    poolAndWalletManager.getCredDef(carDID, new JSONObject(credentialOffer).getString("cred_def_id").toString());
+
+            // 여기서 Credential request 매개변수로 AliceWallet, AliceDID, Credential Offer, Credential Definition, Master Secret ID
+            System.out.println("\n해당 유저는 VC생성을 위해 Issuer에게 보낼 transcript credential request를 준비한다");
+            AnoncredsResults.ProverCreateCredentialRequestResult credentialRequestResult =
+                    Anoncreds.proverCreateCredentialReq(memberWallet, carDID, credentialOffer,
+                            parsedCredDefResponse.getObjectJson(), MasterSecretId).get();
 
 
-        String carVC = poolAndWalletManager.getVC(credentialRequestResult.getCredentialRequestJson(),credentialOffer);
+            String carVC = poolAndWalletManager.getVC(credentialRequestResult.getCredentialRequestJson(), credentialOffer, member.getName(), carNumber);
 
-        System.out.println("\n\n\n받은 자동차에 대한 VC : " + carVC);
+            System.out.println("\n\n\n받은 자동차에 대한 VC : " + carVC);
 
-        // 유저가 받은 VC를 본인 지갑에 저장
-        Anoncreds.proverStoreCredential(memberWallet, null, credentialRequestResult.getCredentialRequestMetadataJson()
-                , carVC, parsedCredDefResponse.getObjectJson(), null);
+            // 유저가 받은 VC를 본인 지갑에 저장
+            Anoncreds.proverStoreCredential(memberWallet, null, credentialRequestResult.getCredentialRequestMetadataJson()
+                    , carVC, parsedCredDefResponse.getObjectJson(), null);
 
-        poolAndWalletManager.closeUserWallet(memberWallet);
+            return member.getName();
+
+        } catch (Exception e) {
+            System.out.println(e.getStackTrace());
+            throw new ApplicationException(ErrorCode.FAIL_CREATE_VC);
+        } finally {
+            poolAndWalletManager.closeUserWallet(memberWallet);
+        }
     }
 
     @Transactional
-    public void getVC(Long Id , String walletPassword) throws IndyException, ExecutionException, InterruptedException {
+    public MyVCResponse getVC(Long Id , String walletPassword) throws IndyException, ExecutionException, InterruptedException {
 
-        MemberEntity member = memberRepository.findOne(Id);
+        Wallet memberWallet = null;
 
-        Wallet memberWallet = poolAndWalletManager.openUserWallet(member.getEmail(), walletPassword);
+        try {
+            MemberEntity member = memberRepository.findOne(Id);
 
-        JSONObject json = new JSONObject();
+            memberWallet = poolAndWalletManager.openUserWallet(member.getEmail(), walletPassword);
 
-        String filter = json.put("issuer_did", "FRHUK728gcnv3VM3GwCwQR").toString();
+            JSONObject json = new JSONObject();
 
-        // 발급자의 did로 뽑아냄 VC를 뽑아냄..?
-        String credentials = Anoncreds.proverGetCredentials(memberWallet, filter).get();
+            String filter = json.put("issuer_did", issuerDID).toString();
 
-        // TODO : 유저에게 어떤식으로 제공할 건가.... 이걸 토대로 요청 누르면 등록되는 방식이기 때문에 중요!!
-        System.out.println("\n\ndid : "+Did.getListMyDidsWithMeta(memberWallet).get());
-        System.out.println(credentials);
+            // 발급자의 did로 뽑아냄 VC를 뽑아냄..?
+            String credentials = Anoncreds.proverGetCredentials(memberWallet, filter).get();
 
-        poolAndWalletManager.closeUserWallet(memberWallet);
+            poolAndWalletManager.closeUserWallet(memberWallet);
 
+            List<MyVCResponse.VerifiableCredential> vcList = new ArrayList<>();
+            JSONArray jsonArray = new JSONArray(credentials);
+
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject vcObject = jsonArray.getJSONObject(i);
+
+                MyVCResponse.VerifiableCredential vcData = MyVCResponse.VerifiableCredential.builder()
+                        .referent(vcObject.getString("referent"))
+                        .name(vcObject.getJSONObject("attrs").getString("owner_last_name") + vcObject.getJSONObject("attrs").getString("owner_first_name"))
+                        .carModel(vcObject.getJSONObject("attrs").getString("car_model"))
+                        .carNumber(vcObject.getJSONObject("attrs").getString("car_number"))
+                        .carFuel(vcObject.getJSONObject("attrs").getString("car_fuel"))
+                        .carDeliveryDate(vcObject.getJSONObject("attrs").getString("car_delivery_date"))
+                        .inspectionRecord(vcObject.getJSONObject("attrs").getString("inspection_record"))
+                        .drivingRecord(vcObject.getJSONObject("attrs").getString("driving_record"))
+                        .build();
+
+                vcList.add(vcData);
+
+            }
+
+            MyVCResponse response = new MyVCResponse(member.getName(), vcList);
+
+            return response;
+        } catch (Exception e) {
+            System.out.println(e.getStackTrace());
+            throw new ApplicationException(ErrorCode.FAIL_GET_VC);
+        } finally {
+            poolAndWalletManager.closeUserWallet(memberWallet);
+        }
     }
 
     /**
@@ -126,46 +176,94 @@ public class CarService {
      */
 
     @Transactional
-    public void postCar(Long memberId , String walletPassword , String referentVC) throws Exception {
+    public RegisterCarResponse postCar(Long memberId , MemberRequest.registerCarRequest request , List<MultipartFile> images) throws Exception {
 
-        System.out.println("자동차 등록을 위한 VP 생성");
+        Wallet memberWallet = null;
 
-        MemberEntity member = memberRepository.findOne(memberId);
+        try {
 
-        Wallet memberWallet = poolAndWalletManager.openUserWallet(member.getEmail(), walletPassword);
+            System.out.println("자동차 등록을 위한 VP 생성");
 
-        String proofRequestJson = poolAndWalletManager.getProofRequest(memberId);
+            MemberEntity member = memberRepository.findOne(memberId);
 
-        poolAndWalletManager.createVP(proofRequestJson, memberWallet, member.getWalletMasterKey(), member.getName(), referentVC, memberId);
+            memberWallet = poolAndWalletManager.openUserWallet(member.getEmail(), request.getWalletPassword());
 
-        Map<String, String> vp = poolAndWalletManager.createVP(proofRequestJson, memberWallet, member.getWalletMasterKey(), member.getName(), referentVC, memberId);
+            // 이게 제출할 VP 구조 정의한 것
+            String proofRequestJson = poolAndWalletManager.getProofRequest(memberId);
 
-        boolean res = poolAndWalletManager.verifyVP(proofRequestJson, vp);
+            Map<String, String> vp = poolAndWalletManager.createVP(proofRequestJson, memberWallet, member.getWalletMasterKey(), member.getName(), request.getReferentVC(), memberId);
 
-        // 여기서 request
-        if(res){ // 일치시
-            // TODO : 받은 데이터들로 자동차 등록 chainCode 실행
-            //      흠... VP 검증과 자동차 등록을 분리할까..
-            TayoConnect tayoConnect = new TayoConnect(1);
-            // TODO : 여기 넣어줄 값? proofRequestJson에서 가져오는지? + 추가로 사용자가 입력하는 값들 어떻게 받아오는지..
-            Car car = new Car(10, 100, "Sedan", "V6", "2023-08-23", 0, "", new ArrayList<>(), "", "", 0.0, 0.0, false, 0);
-            tayoConnect.createCar(car);
+            boolean res = poolAndWalletManager.verifyVP(proofRequestJson, vp);
 
-            System.out.println("일치!!!");
+            String carNumber;
 
-        }else{
-            // TODO : 검증안되면 Exception 던지기
-            System.out.println("불일치 !!");
+            if (res) {
+                System.out.println("VP 검증 완료 !!!!");
 
+                System.out.println("[차량 위치] : " + request.getLocation().toString());
+                System.out.println("[이용 가격] : " + request.getSharingPrice());
+                System.out.println("[이용 가능 시간]");
+                for (MemberRequest.registerCarRequest.SharingTime st : request.getTimeList()) {
+                    System.out.println(st.getStartTime() + " ~ " + st.getEndTime());
+                }
+
+                List<String> urls = s3Uploader.uploadFile(images);
+                System.out.println("[차량 이미지 url]");
+                for (String url : urls) {
+                    System.out.println(url);
+                }
+
+                // vp 데이터 뽑기
+                String proofJson = vp.get("proofJson");
+                JSONObject selfAttestedAttrs = new JSONObject(proofJson).getJSONObject("requested_proof").getJSONObject("self_attested_attrs");
+                JSONObject revealedAttrs = new JSONObject(proofJson).getJSONObject("requested_proof").getJSONObject("revealed_attrs");
+
+                //String userName = selfAttestedAttrs.getString("attr1_referent") + selfAttestedAttrs.getString("attr2_referent");
+                carNumber = revealedAttrs.getJSONObject("attr3_referent").getString("raw");
+                String carModel = revealedAttrs.getJSONObject("attr4_referent").getString("raw");
+                String carFuel = revealedAttrs.getJSONObject("attr5_referent").getString("raw");
+                String drivingRecord = revealedAttrs.getJSONObject("attr6_referent").getString("raw");
+                String inspectionRecord = revealedAttrs.getJSONObject("attr7_referent").getString("raw");
+                String carDeliveryDate = revealedAttrs.getJSONObject("attr8_referent").getString("raw");
+
+                System.out.println("[VP에 있는 데이터]");
+                System.out.println("차주 이름 : " + member.getName());
+                System.out.println("차량 번호 : " + carNumber);
+                System.out.println("차량 모델 : " + carModel);
+                System.out.println("차량 연료 : " + carFuel);
+                System.out.println("주행 거리 : " + drivingRecord);
+                System.out.println("최근 검사 날짜 : " + inspectionRecord);
+                System.out.println("출고 날짜 : " + carDeliveryDate);
+
+
+                // TODO : 위 데이터 기반으로 자동차 등록 chainCode 실행
+                TayoConnect tayoConnect = new TayoConnect(1);
+                // TODO : 여기 넣어줄 값? proofRequestJson에서 가져오는지? + 추가로 사용자가 입력하는 값들 어떻게 받아오는지..
+                Car car = new Car(10, 100, "Sedan", "V6", "2023-08-23", 0, "", new ArrayList<>(), "", "", 0.0, 0.0, false, 0);
+                tayoConnect.createCar(car);
+
+                poolAndWalletManager.closeUserWallet(memberWallet);
+
+                return new RegisterCarResponse(
+                        member.getName(),
+                        carNumber,
+                        request.getLocation(),
+                        request.getSharingPrice(),
+                        request.getTimeList());
+
+            } else {
+                System.out.println("VP 검증 실패 !!");
+                poolAndWalletManager.closeUserWallet(memberWallet);
+                throw new ApplicationException(ErrorCode.FAIL_VERIFY_VP);
+            }
+
+        } catch (Exception e) {
+            System.out.println(e.getStackTrace());
+            throw new ApplicationException(ErrorCode.FAIL_VERIFY_VP2);
+        } finally {
+            poolAndWalletManager.closeUserWallet(memberWallet);
         }
 
-        poolAndWalletManager.closeUserWallet(memberWallet);
-
     }
-
-
-
-
-
 
 }

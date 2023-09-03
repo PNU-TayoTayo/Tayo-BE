@@ -5,6 +5,7 @@ import lombok.*;
 import javax.persistence.*;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Objects;
 
 @Entity
 @Getter
@@ -13,23 +14,6 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MemberEntity {
-    /*
-        아이디 Id
-
-        이메일 email
-        비밀번호 password
-
-        이름 Name
-        연락처 phoneNumber
-
-        닉네임 nickName
-        한줄 소개 introduce
-
-        평점, 공유횟수(거래 체결 횟수)
-        한줄 소개
-        지갑 Wallet?
-
-     */
 
     @Id
     @GeneratedValue
@@ -74,5 +58,16 @@ public class MemberEntity {
         this.walletMasterKey = walletMasterKey;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MemberEntity that = (MemberEntity) o;
+        return Objects.equals(id, that.id) && role == that.role && Objects.equals(email, that.email) && Objects.equals(password, that.password) && Objects.equals(name, that.name) && Objects.equals(phoneNumber, that.phoneNumber) && Objects.equals(nickName, that.nickName) && Objects.equals(introduce, that.introduce) && Objects.equals(walletMasterKey, that.walletMasterKey) && Objects.equals(registeredAt, that.registeredAt) && Objects.equals(updatedAt, that.updatedAt);
+    }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, role, email, password, name, phoneNumber, nickName, introduce, walletMasterKey, registeredAt, updatedAt);
+    }
 }

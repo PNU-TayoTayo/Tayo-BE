@@ -35,7 +35,7 @@ public class MemberController {
     //@Parameter(name = "str", description = "2번 반복할 문자열")
     @PostMapping("/join")
     public Response<MemberResponse> join(@RequestBody MemberRequest.MemberJoinRequest request) throws IndyException, ExecutionException, InterruptedException {
-
+        // TODO : 이미 존재하는 회원일 때 그에 맞는 Exception 처리
         Member member = memberService.join(request);
 
         return Response.success("회원가입 성공", MemberResponse.fromMember(member));
@@ -44,7 +44,6 @@ public class MemberController {
     /**
      *
      * 로그인 API
-     *
      */
 
     @Operation(summary = "타요타요 서비스 로그인", description = "해당 API를 사용해서 타요타요 서비스 로그인이 가능합니다")

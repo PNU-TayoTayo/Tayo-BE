@@ -13,13 +13,16 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pnu.cse.TayoTayo.TayoBE.connect.TayoConnect;
 import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
+import pnu.cse.TayoTayo.TayoBE.model.Car;
 import pnu.cse.TayoTayo.TayoBE.model.Member;
 import pnu.cse.TayoTayo.TayoBE.model.entity.MemberEntity;
 import pnu.cse.TayoTayo.TayoBE.repository.MemberRepository;
 import pnu.cse.TayoTayo.TayoBE.util.PoolAndWalletManager;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -133,23 +136,28 @@ public class CarService {
 
         String proofRequestJson = poolAndWalletManager.getProofRequest(memberId);
 
-        //poolAndWalletManager.createVP(proofRequestJson, memberWallet, member.getWalletMasterKey(), member.getName(), referentVC);
+        poolAndWalletManager.createVP(proofRequestJson, memberWallet, member.getWalletMasterKey(), member.getName(), referentVC, memberId);
 
         Map<String, String> vp = poolAndWalletManager.createVP(proofRequestJson, memberWallet, member.getWalletMasterKey(), member.getName(), referentVC, memberId);
 
-        //boolean res = poolAndWalletManager.verifyVP(proofRequestJson, vp);
-//
-//        // 여기서 request
-//        if(res){ // 일치시
-//            // TODO : 받은 데이터들로 자동차 등록 chainCode 실행
-//            //      흠... VP 검증과 자동차 등록을 분리할까..
-//            System.out.println("일치!!!");
-//
-//        }else{
-//            // TODO : 검증안되면 Exception 던지기
-//            System.out.println("불일치 !!");
-//
-//        }
+        boolean res = poolAndWalletManager.verifyVP(proofRequestJson, vp);
+
+        // 여기서 request
+        if(res){ // 일치시
+            // TODO : 받은 데이터들로 자동차 등록 chainCode 실행
+            //      흠... VP 검증과 자동차 등록을 분리할까..
+            TayoConnect tayoConnect = new TayoConnect(1);
+            // TODO : 여기 넣어줄 값? proofRequestJson에서 가져오는지? + 추가로 사용자가 입력하는 값들 어떻게 받아오는지..
+            Car car = new Car(10, 100, "Sedan", "V6", "2023-08-23", 0, "", new ArrayList<>(), "", "", 0.0, 0.0, false, 0);
+            tayoConnect.createCar(car);
+
+            System.out.println("일치!!!");
+
+        }else{
+            // TODO : 검증안되면 Exception 던지기
+            System.out.println("불일치 !!");
+
+        }
 
         poolAndWalletManager.closeUserWallet(memberWallet);
 

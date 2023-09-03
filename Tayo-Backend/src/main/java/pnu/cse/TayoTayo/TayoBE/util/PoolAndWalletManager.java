@@ -22,7 +22,7 @@ import org.springframework.web.client.RestTemplate;
 import pnu.cse.TayoTayo.TayoBE.exception.ApplicationException;
 import pnu.cse.TayoTayo.TayoBE.exception.ErrorCode;
 import pnu.cse.TayoTayo.TayoBE.model.entity.MemberEntity;
-import pnu.cse.TayoTayo.TayoBE.util.indy.indytest;
+
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -518,7 +518,11 @@ public class PoolAndWalletManager {
         return Ledger.parseGetCredDefResponse(get_cred_def_response).get();
     }
 
-    public String ensurePreviousRequestApplied(Pool pool, String checkerRequest, indytest.PoolResponseChecker checker)
+    public interface PoolResponseChecker {
+        boolean check(String response);
+    }
+
+    public String ensurePreviousRequestApplied(Pool pool, String checkerRequest, PoolResponseChecker checker)
             throws IndyException, ExecutionException, InterruptedException {
 
         for (int i = 0; i < 3; i++) {

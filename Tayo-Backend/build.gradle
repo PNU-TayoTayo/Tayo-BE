@@ -59,6 +59,10 @@ dependencies {
 	implementation("org.json:json:20230227")
 	implementation("org.hyperledger:indy:1.15.0")
 
+	// hyperledger fabric-gateway
+	implementation 'org.hyperledger.fabric:fabric-gateway:1.3.0'
+	implementation 'io.grpc:grpc-netty-shaded:1.56.0'
+
 	// AWS-s3
 	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
 
@@ -66,8 +70,6 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	implementation 'org.webjars:sockjs-client:1.5.1'
 	implementation 'org.webjars:stomp-websocket:2.3.4'
-
-
 }
 
 tasks.named('test') {

@@ -14,6 +14,8 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pnu.cse.TayoTayo.TayoBE.connect.TayoConnect;
+import pnu.cse.TayoTayo.TayoBE.model.Car;
 import org.springframework.web.multipart.MultipartFile;
 import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
 import pnu.cse.TayoTayo.TayoBE.dto.response.CreateVCResponse;
@@ -235,6 +237,10 @@ public class CarService {
 
 
                 // TODO : 위 데이터 기반으로 자동차 등록 chainCode 실행
+                TayoConnect tayoConnect = new TayoConnect(1);
+                // TODO : 여기 넣어줄 값? proofRequestJson에서 가져오는지? + 추가로 사용자가 입력하는 값들 어떻게 받아오는지..
+                Car car = new Car(10, 100, "Sedan", "V6", "2023-08-23", 0, "", new ArrayList<>(), "", "", 0.0, 0.0, false, 0);
+                tayoConnect.createCar(car);
 
                 poolAndWalletManager.closeUserWallet(memberWallet);
 

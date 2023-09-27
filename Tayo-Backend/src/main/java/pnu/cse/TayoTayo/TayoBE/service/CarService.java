@@ -9,6 +9,7 @@ import org.hyperledger.indy.sdk.anoncreds.CredentialsSearchForProofReq;
 import org.hyperledger.indy.sdk.did.Did;
 import org.hyperledger.indy.sdk.ledger.LedgerResults;
 import org.hyperledger.indy.sdk.wallet.Wallet;
+import org.joda.time.DateTime;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,8 +29,11 @@ import pnu.cse.TayoTayo.TayoBE.model.entity.MemberEntity;
 import pnu.cse.TayoTayo.TayoBE.repository.MemberRepository;
 import pnu.cse.TayoTayo.TayoBE.util.PoolAndWalletManager;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -203,8 +207,8 @@ public class CarService {
                 System.out.println("[차량 위치] : " + request.getLocation().toString());
                 System.out.println("[이용 가격] : " + request.getSharingPrice());
                 System.out.println("[이용 가능 시간]");
-                for (MemberRequest.registerCarRequest.SharingTime st : request.getTimeList()) {
-                    System.out.println(st.getStartTime() + " ~ " + st.getEndTime());
+                for (LocalDate sd : request.getDateList()) {
+                    System.out.println(sd);
                 }
 
                 List<String> urls = s3Uploader.uploadFile(images);
@@ -238,8 +242,11 @@ public class CarService {
 
                 // TODO : 위 데이터 기반으로 자동차 등록 chainCode 실행
                 TayoConnect tayoConnect = new TayoConnect(1);
-                // TODO : 여기 넣어줄 값? proofRequestJson에서 가져오는지? + 추가로 사용자가 입력하는 값들 어떻게 받아오는지..
-                Car car = new Car(10, 100, "Sedan", "V6", "2023-08-23", 0, "", new ArrayList<>(), "", "", 0.0, 0.0, false, 0);
+
+                MemberRequest.registerCarRequest rq = request;
+                Car car = new Car(generateCarID(request.getReferentVC()), member.getId(), carModel, carFuel, carDeliveryDate, Integer.valueOf(drivingRecord), inspectionRecord,
+                        rq.toDateStringList(), rq.getLocation().getSharingLocation(), rq.getLocation().getSharingLocationAddress(),
+                        rq.getLocation().getSharingLatitude(), rq.getLocation().getSharingLongitude(), true, 0);
                 tayoConnect.createCar(car);
 
                 poolAndWalletManager.closeUserWallet(memberWallet);
@@ -249,7 +256,7 @@ public class CarService {
                         carNumber,
                         request.getLocation(),
                         request.getSharingPrice(),
-                        request.getTimeList());
+                        request.getDateList());
 
             } else {
                 System.out.println("VP 검증 실패 !!");
@@ -264,6 +271,34 @@ public class CarService {
             poolAndWalletManager.closeUserWallet(memberWallet);
         }
 
+    }
+
+    public double generateCarID(String referentVC) {
+        byte[] memberIDBytes = referentVC.getBytes();
+
+        try {
+            // SHA-256 해시 함수를 사용하여 해시 계산
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] carIDBytes = md.digest(memberIDBytes);
+
+            // 바이트 배열을 double로 변환
+            byte[] truncatedBytes = Arrays.copyOf(carIDBytes, 6);
+            double carID = bytesToDouble(truncatedBytes);
+
+            return carID;
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return 0.0;
+        }
+    }
+
+    // 바이트 배열을 double로 변환하는 함수
+    public static double bytesToDouble(byte[] bytes) {
+        long longBits = 0;
+        for (int i = 0; i < 8; i++) {
+            longBits |= (long) (bytes[i] & 0xFF) << (8 * i);
+        }
+        return Double.longBitsToDouble(longBits);
     }
 
 }

@@ -15,7 +15,7 @@ public class Car {
     private String deliveryDate;
     private int drivingRecord;
     private String inspectionRecord;
-    private List<String> timeList;
+    private List<String> dateList;
     private String sharingLocation;
     private String sharingLocationAddress;
     private double sharingLatitude;

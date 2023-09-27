@@ -8,6 +8,7 @@ import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
 import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -20,6 +21,6 @@ public class RegisterCarResponse {
 
     private MemberRequest.registerCarRequest.SharingLocation location; // 장소 관련 데이터 DTO
     private int sharingPrice; // 공유가격
-    private List<MemberRequest.registerCarRequest.SharingTime> timeList;
+    private List<LocalDate> dateList;
 }
 

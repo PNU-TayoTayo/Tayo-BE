@@ -7,7 +7,10 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.multipart.MultipartFile;
 import pnu.cse.TayoTayo.TayoBE.model.entity.NotificationType;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -42,14 +45,26 @@ public class MemberRequest {
 
         private SharingLocation location; // 장소 관련 데이터 DTO
         private int sharingPrice; // 공유가격
-        private List<SharingTime> timeList; // 공유가능한 날짜/시간 목록 DTO
+        private List<LocalDate> dateList; // 공유가능한 날짜/시간 목록 DTO
+
+        // 공유 가능 날짜
+        public List<String> toDateStringList() {
+            List<String> dateStrings = new ArrayList<>();
+
+            for (LocalDate date : dateList) {
+                String dateString = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                dateStrings.add(dateString);
+            }
+
+            return dateStrings;
+        }
 
         @Getter @Setter
         public static class SharingLocation{
             private String sharingLocation; // 공유 장소명
             private String sharingLocationAddress; // 공유 장소 도로명 주소
-            private String sharingLatitude; // 공유 장소 위도
-            private String sharingLongitude; // 공유 장소 경도
+            private Double sharingLatitude; // 공유 장소 위도
+            private Double sharingLongitude; // 공유 장소 경도
 
             @Override
             public String toString() {
@@ -60,15 +75,6 @@ public class MemberRequest {
                         ", sharingLongitude='" + sharingLongitude + '\'' +
                         '}';
             }
-        }
-
-        @Getter @Setter
-        public static class SharingTime{ // 시간 단위..? 날짜단위 ?
-            // 예시 : YYYY-MM-DD
-            @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-            private LocalDateTime startTime;
-            @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-            private LocalDateTime endTime;
         }
 
     }
@@ -125,4 +131,9 @@ public class MemberRequest {
         private String walletPassword;
     }
 
+    @Getter
+    @Setter
+    public static class moneyRequest{
+        private Integer amount;
+    }
 }

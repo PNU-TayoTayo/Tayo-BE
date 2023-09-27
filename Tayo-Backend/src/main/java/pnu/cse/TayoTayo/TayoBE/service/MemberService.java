@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pnu.cse.TayoTayo.TayoBE.config.security.CustomUserDetails;
 import pnu.cse.TayoTayo.TayoBE.config.security.JWTProvider;
+import pnu.cse.TayoTayo.TayoBE.connect.TayoConnect;
 import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
 import pnu.cse.TayoTayo.TayoBE.model.Member;
 import pnu.cse.TayoTayo.TayoBE.model.entity.MemberEntity;
@@ -67,6 +68,10 @@ public class MemberService {
             memberRepository.save(newMember);
 
             poolAndWalletManager.closeUserWallet(memberWallet);
+
+            // Fabric 지갑 생성
+            TayoConnect tayoConnect = new TayoConnect(3);
+            tayoConnect.createWallet(newMember.getId());
 
             return Member.fromEntity(newMember);
 

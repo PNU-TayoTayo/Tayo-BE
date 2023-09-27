@@ -3,15 +3,22 @@ package pnu.cse.TayoTayo.TayoBE.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.hyperledger.fabric.client.CommitException;
+import org.hyperledger.fabric.client.GatewayException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import pnu.cse.TayoTayo.TayoBE.config.security.CustomUserDetails;
+import pnu.cse.TayoTayo.TayoBE.connect.TayoConnect;
 import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
 import pnu.cse.TayoTayo.TayoBE.dto.response.MemberInfoResponse;
 import pnu.cse.TayoTayo.TayoBE.dto.response.MemberIntroResponse;
 import pnu.cse.TayoTayo.TayoBE.dto.response.Response;
 import pnu.cse.TayoTayo.TayoBE.model.Member;
 import pnu.cse.TayoTayo.TayoBE.service.MyPageService;
+
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.cert.CertificateException;
 
 
 @Tag(name = "tayo-api", description = "타요타요 API")
@@ -62,36 +69,33 @@ public class MyPageController {
         return Response.success("한줄 소개 수정에 성공하셨습니다.", MemberIntroResponse.fromMember(member));
     }
 
-
-
-
-
-
-
-
-    // ======================================이 밑에 구현 전 =======================================
     @Operation(summary = "현재 잔액 조회", description = "현재 잔액을 조회하는 API입니다.")
     @GetMapping("/money")
-    public void getMoney(Authentication authentication){
+    public Response<Integer> getMoney(Authentication authentication) throws CertificateException, IOException, InvalidKeyException, CommitException, GatewayException {
 
-
-        //return Response.success("한줄 소개 수정에 성공하셨습니다.", MemberIntroResponse.fromMember(member));
+        TayoConnect tayoConnect = new TayoConnect(2);
+        Integer walletBalance = tayoConnect.queryWalletBalance(((CustomUserDetails) authentication.getPrincipal()).getId());
+        return Response.success("현재 잔액", walletBalance);
     }
 
     @Operation(summary = "잔액 채우기", description = "잔액 채우는 API입니다.")
     @PostMapping("/deposit")
-    public void depositMoney(Authentication authentication){
+    public Response<Integer> depositMoney(Authentication authentication, @RequestBody MemberRequest.moneyRequest request) throws CertificateException, IOException, InvalidKeyException, CommitException, GatewayException {
 
-
-        //return Response.success("한줄 소개 수정에 성공하셨습니다.", MemberIntroResponse.fromMember(member));
+        TayoConnect tayoConnect = new TayoConnect(2);
+        tayoConnect.deposit(((CustomUserDetails) authentication.getPrincipal()).getId(), request.getAmount());
+        Integer walletBalance = tayoConnect.queryWalletBalance(((CustomUserDetails) authentication.getPrincipal()).getId());
+        return Response.success("성공적으로 입금이 완료되었습니다.", walletBalance);
     }
 
     @Operation(summary = "출금하기", description = "출금하는 API입니다.")
     @PostMapping("/withdraw")
-    public void withdrawMoney(Authentication authentication){
+    public Response<Integer> withdrawMoney(Authentication authentication, @RequestBody MemberRequest.moneyRequest request) throws CertificateException, IOException, InvalidKeyException, CommitException, GatewayException {
 
-
-        //return Response.success("한줄 소개 수정에 성공하셨습니다.", MemberIntroResponse.fromMember(member));
+        TayoConnect tayoConnect = new TayoConnect(2);
+        tayoConnect.withdraw(((CustomUserDetails) authentication.getPrincipal()).getId(), request.getAmount());
+        Integer walletBalance = tayoConnect.queryWalletBalance(((CustomUserDetails) authentication.getPrincipal()).getId());
+        return Response.success("성공적으로 출금이 완료되었습니다.", walletBalance);
     }
 
     @Operation(summary = "최근 거래 내역 조회", description = "최근 거래 내역 조회하는 API입니다.")

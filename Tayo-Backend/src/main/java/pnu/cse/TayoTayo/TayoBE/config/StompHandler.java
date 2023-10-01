@@ -36,14 +36,15 @@ public class StompHandler implements ChannelInterceptor {
             System.out.println("여기서 jwt 검증하기 "); // 검증하고 나온 userId를 addUserSession에 넣기
             System.out.println("접속 세션 : " + accessor.getSessionId());
 
-            // TODO : jwt에서 userId 꺼내기!!!
-            String authorizationHeader = String.valueOf(accessor.getNativeHeader("Authorization"));
+            String authorizationHeader = String.valueOf(accessor.getFirstNativeHeader("Authorization"));
+            System.out.println("헤더 꺼내기: " + authorizationHeader);
             if(authorizationHeader == null || authorizationHeader.equals("null")){
                 throw new MessageDeliveryException("헤더에 JWT 토큰이 안들어감");
             }
 
             Long id = jwtProvider.verify(authorizationHeader).getClaim("id").asLong();
             connectState.addUserSession(accessor.getSessionId(),id);
+            System.out.println("현재 userID : "+ id);
 
         }else if(StompCommand.SEND.equals(accessor.getCommand())){
             System.out.println("메시지 들어옴");

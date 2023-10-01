@@ -34,7 +34,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // Client에서 websocket 연결할 때, 사용할 API 경로를 설정
         registry.addEndpoint("/ws/chat")
                 //.addInterceptors(jwtHandshakeInterceptor)
-                .setAllowedOriginPatterns("*").withSockJS();
+                .setAllowedOriginPatterns("*");//.withSockJS();
     }
 
     @Override

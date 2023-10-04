@@ -9,7 +9,7 @@ import java.util.List;
 @AllArgsConstructor
 public class Car {
     private double carID;
-    private double ownerID;
+    private Long ownerID;
     private String model;
     private String engine;
     private String deliveryDate;
@@ -21,5 +21,6 @@ public class Car {
     private double sharingLatitude;
     private double sharingLongitude;
     private boolean sharingAvailable;
+    private int sharingPrice;
     private int sharingRating;
 }

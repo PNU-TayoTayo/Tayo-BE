@@ -3,6 +3,7 @@ package pnu.cse.TayoTayo.TayoBE.dto.request;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
 import java.util.UUID;
 
 public class CarRequest {
@@ -11,8 +12,7 @@ public class CarRequest {
     @Setter
     public static class sharingRequest{
         private double carID;
-        private double lenderID;
-        private double borrowerID;
+        private Long lenderID;
         private int sharingPrice;
         private String sharingDate;
         private String sharingLocation;
@@ -26,4 +26,16 @@ public class CarRequest {
         }
     }
 
+    @Getter
+    @Setter
+    public static class modifyCarRequest{
+        private double carID;
+        private List<String> dateList;
+        private String sharingLocation;
+        private String sharingLocationAddress;
+        private double sharingLatitude;
+        private double sharingLongitude;
+        private boolean sharingAvailable;
+        private int sharingPrice;
+    }
 }

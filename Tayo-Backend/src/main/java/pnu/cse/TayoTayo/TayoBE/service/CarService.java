@@ -240,13 +240,15 @@ public class CarService {
                 System.out.println("출고 날짜 : " + carDeliveryDate);
 
 
-                // TODO : 위 데이터 기반으로 자동차 등록 chainCode 실행
+                // 위 데이터 기반으로 자동차 등록 chainCode 실행
                 TayoConnect tayoConnect = new TayoConnect(1);
 
                 MemberRequest.registerCarRequest rq = request;
-                Car car = new Car(generateCarID(request.getReferentVC()), member.getId(), carModel, carFuel, carDeliveryDate, Integer.valueOf(drivingRecord), inspectionRecord,
+                Double carID = generateCarID(request.getReferentVC());
+                System.out.println("carID: " + carID);
+                Car car = new Car(carID, member.getId(), carModel, carFuel, carDeliveryDate, Integer.valueOf(drivingRecord), inspectionRecord,
                         rq.toDateStringList(), rq.getLocation().getSharingLocation(), rq.getLocation().getSharingLocationAddress(),
-                        rq.getLocation().getSharingLatitude(), rq.getLocation().getSharingLongitude(), true, 0);
+                        rq.getLocation().getSharingLatitude(), rq.getLocation().getSharingLongitude(), true, rq.getSharingPrice(), 0);
                 tayoConnect.createCar(car);
 
                 poolAndWalletManager.closeUserWallet(memberWallet);
@@ -282,8 +284,7 @@ public class CarService {
             byte[] carIDBytes = md.digest(memberIDBytes);
 
             // 바이트 배열을 double로 변환
-            byte[] truncatedBytes = Arrays.copyOf(carIDBytes, 6);
-            double carID = bytesToDouble(truncatedBytes);
+            double carID = bytesToDouble(carIDBytes);
 
             return carID;
         } catch (NoSuchAlgorithmException e) {

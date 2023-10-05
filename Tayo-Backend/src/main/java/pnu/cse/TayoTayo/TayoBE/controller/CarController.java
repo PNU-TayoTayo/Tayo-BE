@@ -1,6 +1,7 @@
 package pnu.cse.TayoTayo.TayoBE.controller;
 
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -15,6 +16,7 @@ import pnu.cse.TayoTayo.TayoBE.connect.TayoConnect;
 import pnu.cse.TayoTayo.TayoBE.dto.request.CarRequest;
 import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
 import pnu.cse.TayoTayo.TayoBE.dto.response.*;
+import pnu.cse.TayoTayo.TayoBE.model.Car;
 import pnu.cse.TayoTayo.TayoBE.model.Sharing;
 import pnu.cse.TayoTayo.TayoBE.service.CarService;
 import pnu.cse.TayoTayo.TayoBE.service.ChatService;
@@ -22,6 +24,7 @@ import pnu.cse.TayoTayo.TayoBE.service.ChatService;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.cert.CertificateException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -71,34 +74,45 @@ public class CarController {
 
     @Operation(summary = "본인이 등록한 자동차 조회", description = "본인이 등록한 자동차 조회하는 API입니다.")
     @GetMapping("/queryowner")
-    public Response<Void> myCar(Authentication authentication) throws CertificateException, IOException, InvalidKeyException, GatewayException {
+    public Response<CarResponse> myCar(Authentication authentication) throws CertificateException, IOException, InvalidKeyException, GatewayException {
         TayoConnect tayoConnect = new TayoConnect(1);
-        JsonElement cars = tayoConnect.queryCarsByOwnerID(((CustomUserDetails) authentication.getPrincipal()).getId());
-        return Response.success("본인 차량 조회 결과" + cars.toString());
+        JsonArray cars = tayoConnect.queryCarsByOwnerID(((CustomUserDetails) authentication.getPrincipal()).getId());
+
+        List<CarResponse.CarDetail> carDetailList = new ArrayList<>();
+
+        for (JsonElement carElement : cars) {
+            CarResponse.CarDetail carDetail = CarResponse.CarDetail.fromJson(carElement);
+            carDetailList.add(carDetail);
+        }
+
+        CarResponse carResponse = new CarResponse(carDetailList);
+
+        return Response.success("본인 차량 조회 결과", carResponse);
     }
 
     @Operation(summary = "차량에 대한 상세 조회", description = "해당 차량에 대한 상세한 내용을 조회하는 API입니다.")
     @GetMapping("/detail/{carId}")
-    public Response<Void> getDetailCar(Authentication authentication, @PathVariable Long carId) throws CertificateException, IOException, InvalidKeyException, GatewayException {
+    public Response<CarResponse.CarDetail> getDetailCar(Authentication authentication, @PathVariable Double carId) throws CertificateException, IOException, InvalidKeyException, GatewayException {
         TayoConnect tayoConnect = new TayoConnect(1);
         JsonElement cars = tayoConnect.queryByCarID(carId);
-        return Response.success("차량 조회 결과" + cars.toString());
+
+        CarResponse.CarDetail carDetail = CarResponse.CarDetail.fromJson(cars);
+
+        return Response.success("차량 조회 결과", carDetail);
     }
 
     @Operation(summary = "본인이 등록한 차량 수정", description = "본인이 등록한 자동차 수정(vp 자동차 데이터는 수정 불가능)하는 API입니다.")
     @PutMapping("/update")
-    public  Response<Void> updateCar(Authentication authentication) throws CertificateException, IOException, InvalidKeyException {
+    public  Response<Void> updateCar(Authentication authentication, @RequestBody CarRequest.modifyCarRequest request) throws CertificateException, IOException, InvalidKeyException, EndorseException, CommitException, SubmitException, CommitStatusException {
         TayoConnect tayoConnect = new TayoConnect(1);
-//        TODO: 수정 가능한 값 - 공유가능일시, 공유장소명, 공유장소도로명주소, 공유위경도, 공유가능여부(Y/N)
-//        평점도 수정 가능하긴 한데 이건 본인 차량 수정이라서 평점은 그냥 고정하는 걸로... + 그 외 값들은 기존 값들 불러와서 아래처럼 객체 생성해야 함...
-//        Car newCar = new Car(10, 100, "Sedan", "V6", "2023-08-23", 0, "", new ArrayList<>(), "", "", 0.0, 0.0, false, 0);
-//        JsonElement cars = tayoConnect.updateCar(newCar);
+        // 수정 가능한 값 - 공유가능일시, 공유장소명, 공유장소도로명주소, 공유위경도, 공유가능여부(Y/N), 공유가격
+        tayoConnect.updateCar(request);
         return Response.success("해당 차량이 성공적으로 수정되었습니다.");
     }
 
     @Operation(summary = "차량 삭제", description = "자동차를 삭제하는 API입니다.")
     @DeleteMapping("/delete/{carId}")
-    public Response<Void> deleteCar(Authentication authentication, @PathVariable Long carId) throws CertificateException, IOException, InvalidKeyException, EndorseException, CommitException, SubmitException, CommitStatusException {
+    public Response<Void> deleteCar(Authentication authentication, @PathVariable Double carId) throws CertificateException, IOException, InvalidKeyException, EndorseException, CommitException, SubmitException, CommitStatusException {
         TayoConnect tayoConnect = new TayoConnect(1);
         tayoConnect.deleteCar(carId);
         return Response.success("해당 차량이 성공적으로 삭제되었습니다.");
@@ -106,18 +120,28 @@ public class CarController {
 
     @Operation(summary = "위치 기반 차량 검색 조회", description = "위경도와 날짜를 기반으로 현재 지도에 있는 자동차를 조회하는 API입니다.")
     @GetMapping("/search")
-    public Response<Void> getCars(Authentication authentication,
+    public Response<CarResponse> getCars(Authentication authentication,
           @RequestParam Double leftLatitude, @RequestParam Double leftLongitude, @RequestParam Double rightLatitude, @RequestParam Double rightLongitude,
           @RequestParam String date) throws CertificateException, IOException, InvalidKeyException, CommitException, GatewayException {
 
         TayoConnect tayoConnect = new TayoConnect(1);
-        JsonElement cars = tayoConnect.getAvailableCars(leftLatitude, leftLongitude, rightLatitude, rightLongitude, date);
-        return Response.success("위치 기반 차량 조회 결과" + cars.toString());
+        JsonArray cars = tayoConnect.getAvailableCars(leftLatitude, leftLongitude, rightLatitude, rightLongitude, date);
+
+        List<CarResponse.CarDetail> carDetailList = new ArrayList<>();
+
+        for (JsonElement carElement : cars) {
+            CarResponse.CarDetail carDetail = CarResponse.CarDetail.fromJson(carElement);
+            carDetailList.add(carDetail);
+        }
+
+        CarResponse carResponse = new CarResponse(carDetailList);
+
+        return Response.success("위치 기반 차량 조회 결과", carResponse);
     }
 
     @Operation(summary = "차량 대여 신청 하기", description = "임차인이 차량 대여 신청을 하면 채팅방이 생성되는 API입니다.")
-    @PostMapping("/detail/{carId}")
-    public Response<Void> requestCar(Authentication authentication, @RequestPart CarRequest.sharingRequest request) throws CertificateException, IOException, InvalidKeyException, CommitException, GatewayException {
+    @PostMapping("/sharing")
+    public Response<Void> requestCar(Authentication authentication, @RequestBody CarRequest.sharingRequest request) throws CertificateException, IOException, InvalidKeyException, CommitException, GatewayException {
 
         // TODO : 상세조회 정보 기반으로 임차인과 임대인 사이에 채팅방 생성 + 임대인한테 알람
         /*
@@ -132,8 +156,11 @@ public class CarController {
         TayoConnect tayoConnect = new TayoConnect(3);
         CarRequest.sharingRequest rq = request;
         // sharingID(unique 값 - carID로 생성), carID, lenderID, borrowerID, sharingPrice, sharingTime
-        Sharing sharing = new Sharing(rq.generateSharingIDFromCarID(), rq.getCarID(), rq.getLenderID(), rq.getBorrowerID(), rq.getSharingPrice(),
+        // borrowerID는 로그인 중인 사용자 값 전달함!
+        Sharing sharing = new Sharing(rq.generateSharingIDFromCarID(), rq.getCarID(),
+                rq.getLenderID(), ((CustomUserDetails) authentication.getPrincipal()).getId(), rq.getSharingPrice(),
                 rq.getSharingDate(), rq.getSharingLocation(), rq.getSharingStatus());
+
         tayoConnect.createSharing(sharing);
 
         chatService.createChatRoom(((CustomUserDetails) authentication.getPrincipal()).getId(),

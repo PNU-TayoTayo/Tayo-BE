@@ -20,7 +20,7 @@ type SmartContract struct {
 // 업데이트 (변경) 시 해당 필드 값만 변경하도록 함
 type Car struct {
 	ID                     float64  `json:"carID"`
-	OwnerID                float64  `json:"ownerID"`
+	OwnerID                int      `json:"ownerID"`
 	Model                  string   `json:"model"`
 	Engine                 string   `json:"engine"`
 	DeliveryDate           string   `json:"deliveryDate"`
@@ -32,6 +32,7 @@ type Car struct {
 	SharingLatitude        float64  `json:"sharingLatitude"`        // *
 	SharingLongitude       float64  `json:"sharingLongitude"`       // *
 	SharingAvailable       bool     `json:"sharingAvailable"`       // *
+	SharingPrice           int      `json:"sharingPrice"`           // *
 	SharingRating          int      `json:"sharingRating"`          // *
 }
 
@@ -47,19 +48,19 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 			DeliveryDate: "2023-07-19", DrivingRecord: 250, InspectionRecord: "2021-11-20",
 			DateList:        []string{"2023-07-19", "2023-07-20"},
 			SharingLocation: "부산대학교 부산캠퍼스농구장", SharingLocationAddress: "부산 금정구 부산대학로63번길 2",
-			SharingLatitude: 12.500, SharingLongitude: 67.89, SharingAvailable: true, SharingRating: 0},
+			SharingLatitude: 12.500, SharingLongitude: 67.89, SharingAvailable: true, SharingPrice: 30000, SharingRating: 0},
 
 		{ID: 2, OwnerID: 1, Model: "Model2", Engine: "Engine2",
 			DeliveryDate: "2023-07-19", DrivingRecord: 250, InspectionRecord: "2022-04-06",
 			DateList:        []string{"2023-07-19", "2023-07-20"},
 			SharingLocation: "부산대학교 부산캠퍼스농구장", SharingLocationAddress: "부산 금정구 부산대학로63번길 2",
-			SharingLatitude: 46.000, SharingLongitude: 88.000, SharingAvailable: true, SharingRating: 0},
+			SharingLatitude: 46.000, SharingLongitude: 88.000, SharingAvailable: true, SharingPrice: 30000, SharingRating: 0},
 
 		{ID: 3, OwnerID: 3, Model: "Model2", Engine: "Engine2",
 			DeliveryDate: "2023-07-19", DrivingRecord: 250, InspectionRecord: "2022-04-06",
 			DateList:        []string{"2023-07-19", "2023-07-20"},
 			SharingLocation: "부산대학교 부산캠퍼스농구장", SharingLocationAddress: "부산 금정구 부산대학로63번길 2",
-			SharingLatitude: 40.7128, SharingLongitude: -74.0060, SharingAvailable: true, SharingRating: 0},
+			SharingLatitude: 40.7128, SharingLongitude: -74.0060, SharingAvailable: true, SharingPrice: 30000, SharingRating: 0},
 	}
 
 	for _, car := range cars {
@@ -125,9 +126,9 @@ func (s *SmartContract) QueryCarByCarID(ctx contractapi.TransactionContextInterf
 
 // ownerID로 차량 조회 - 연결 완료
 func (s *SmartContract) QueryCarByOwnerID(ctx contractapi.TransactionContextInterface, ownerID string) ([]*Car, error) {
-	ownerIDFloat, err := strconv.ParseFloat(ownerID, 64)
+	ownerIDInt, err := strconv.Atoi(ownerID)
 
-	queryString := fmt.Sprintf(`{"selector":{"ownerID":%.0f}}`, ownerIDFloat)
+	queryString := fmt.Sprintf(`{"selector":{"ownerID":%d}}`, ownerIDInt)
 	resultsIterator, err := ctx.GetStub().GetQueryResult(queryString)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get query result: %v", err)
@@ -222,8 +223,16 @@ func dateInDateList(date string, dateList []string) bool {
 }
 
 // carID로 차량 정보 업데이트 함수
-func (s *SmartContract) UpdateCar(ctx contractapi.TransactionContextInterface, carID float64, dateList []string, sharingLocation string, sharingLocationAddress string, sharingLatitude float64, sharingLongitude float64, sharingAvailable bool, sharingRating int) error {
-	carAsBytes, err := getCarByID(ctx, carID)
+func (s *SmartContract) UpdateCar(ctx contractapi.TransactionContextInterface, carID string, dateList string,
+	sharingLocation string, sharingLocationAddress string, sharingLatitudeStr string, sharingLongitudeStr string,
+	sharingAvailableStr string, sharingPriceStr string) error {
+	carIDFloat, err := strconv.ParseFloat(carID, 64)
+	carAsBytes, err := getCarByID(ctx, carIDFloat)
+	sharingLatitude, err := strconv.ParseFloat(sharingLatitudeStr, 64)
+	sharingLongitude, err := strconv.ParseFloat(sharingLongitudeStr, 64)
+	sharingAvailable, err := strconv.ParseBool(sharingAvailableStr)
+	sharingPrice, err := strconv.Atoi(sharingPriceStr)
+
 	if err != nil {
 		return err
 	}
@@ -236,7 +245,11 @@ func (s *SmartContract) UpdateCar(ctx contractapi.TransactionContextInterface, c
 
 	// 업데이트할 필드만 값 변경
 	if len(dateList) > 0 {
-		car.DateList = dateList
+		// dateList 문자열을 JSON 배열로 파싱
+		err := json.Unmarshal([]byte(dateList), &car.DateList)
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal dateList: %v", err)
+		}
 	}
 	if sharingLocation != "" {
 		car.SharingLocation = sharingLocation
@@ -253,8 +266,8 @@ func (s *SmartContract) UpdateCar(ctx contractapi.TransactionContextInterface, c
 	if sharingAvailable {
 		car.SharingAvailable = sharingAvailable
 	}
-	if sharingRating >= 0 {
-		car.SharingRating = sharingRating
+	if sharingPrice >= 0 {
+		car.SharingPrice = sharingPrice
 	}
 
 	carAsBytes, err = json.Marshal(car)

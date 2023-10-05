@@ -8,8 +8,8 @@ import lombok.Getter;
 public class Sharing {
     private double sharingID;
     private double carID;
-    private double lenderID;
-    private double borrowerID;
+    private Long lenderID;
+    private Long borrowerID;
     private int sharingPrice;
     private String sharingDate;
     private String sharingLocation;

@@ -23,10 +23,10 @@ type SmartContract struct {
 type Sharing struct {
 	ID              float64 `json:"sharingID"`
 	CarID           float64 `json:"carID"`
-	LenderID        float64 `json:"lenderID"`
-	BorrowerID      float64 `json:"borrowerID"`
+	LenderID        int     `json:"lenderID"`
+	BorrowerID      int     `json:"borrowerID"`
 	SharingPrice    int     `json:"sharingPrice"`
-	SharingTime     string  `json:"sharingTime"`
+	SharingDate     string  `json:"sharingDate"`
 	SharingLocation string  `json:"sharingLocation"`
 	SharingStatus   string  `json:"sharingStatus"`
 }
@@ -34,7 +34,7 @@ type Sharing struct {
 // 사용자 지갑
 type Wallet struct {
 	ID     float64 `json:"walletID"`
-	UserID float64 `json:"userID"`
+	UserID int     `json:"userID"`
 	Money  int     `json:"money"`
 }
 
@@ -47,7 +47,7 @@ type QueryResult struct {
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	sharings := []Sharing{
 		{ID: 1, CarID: 1, LenderID: 1, BorrowerID: 2,
-			SharingPrice: 20000, SharingTime: "2023-07-19 12:00", SharingLocation: "부산대학교", SharingStatus: "신청"},
+			SharingPrice: 20000, SharingDate: "2023-07-19 12:00", SharingLocation: "부산대학교", SharingStatus: "신청"},
 	}
 
 	for _, sharing := range sharings {
@@ -62,24 +62,6 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 		}
 	}
 
-	// wallets := []Wallet{
-	// 	{ID: 2, UserID: 1, Money: 1000},
-	// 	{ID: 3, UserID: 2, Money: 1500},
-	// 	{ID: 4, UserID: 3, Money: 2000},
-	// }
-
-	// for _, wallet := range wallets {
-	// 	walletJSON, err := json.Marshal(wallet)
-	// 	if err != nil {
-	// 		return fmt.Errorf("failed to marshal wallet data: %v", err)
-	// 	}
-
-	// 	err = ctx.GetStub().PutState(fmt.Sprintf("%.0f", wallet.ID), walletJSON)
-	// 	if err != nil {
-	// 		return fmt.Errorf("failed to put wallet data on ledger: %v", err)
-	// 	}
-	// }
-
 	return nil
 }
 
@@ -92,14 +74,12 @@ func (s *SmartContract) CreateSharing(ctx contractapi.TransactionContextInterfac
 	return ctx.GetStub().PutState(fmt.Sprintf("%.0f", sharing.ID), sharingAsBytes)
 }
 
-// TODO - 수정 필요
 // sharing 구조체 업데이트 함수
-func (s *SmartContract) UpdateSharing(ctx contractapi.TransactionContextInterface, carID string, sharingStatus string, sharingPrice string, sharingTime string, sharingLocation string) error {
+func (s *SmartContract) UpdateSharing(ctx contractapi.TransactionContextInterface, carID string, sharingStatus string, sharingPrice string, sharingDate string, sharingLocation string) error {
 	carIDFloat, err := strconv.ParseFloat(carID, 64)
 	sharingPriceInt, err := strconv.Atoi(sharingPrice)
 
-	// carID를 sharingID로 변환 -> string 값 반환
-	sharingID := computeUniqueID(carIDFloat)
+	sharingID := computeUniqueIDFloat(carIDFloat)
 
 	sharingAsBytes, err := ctx.GetStub().GetState(fmt.Sprintf("%.0f", sharingID))
 	if err != nil {
@@ -123,8 +103,8 @@ func (s *SmartContract) UpdateSharing(ctx contractapi.TransactionContextInterfac
 	if sharingPriceInt >= 0 {
 		sharing.SharingPrice = sharingPriceInt
 	}
-	if sharingTime != "" {
-		sharing.SharingTime = sharingTime
+	if sharingDate != "" {
+		sharing.SharingDate = sharingDate
 	}
 	if sharingLocation != "" {
 		sharing.SharingLocation = sharingLocation
@@ -147,12 +127,12 @@ func (s *SmartContract) UpdateSharing(ctx contractapi.TransactionContextInterfac
 // 재화 거래 과정
 func (s *SmartContract) ProcessTransaction(ctx contractapi.TransactionContextInterface, carID string, lenderID string, borrowerID string, sharingPrice string) error {
 	carIDFloat, err := strconv.ParseFloat(carID, 64)
-	lenderIDFloat, err := strconv.ParseFloat(lenderID, 64)
-	borrowerIDFloat, err := strconv.ParseFloat(borrowerID, 64)
+	lenderIDInt, err := strconv.Atoi(lenderID)
+	borrowerIDInt, err := strconv.Atoi(borrowerID)
 	sharingPriceInt, err := strconv.Atoi(sharingPrice)
 
 	// carID를 sharingID로 변환
-	sharingID := computeUniqueID(carIDFloat)
+	sharingID := computeUniqueIDFloat(carIDFloat)
 	sharing, err := s.ReadSharingByID(ctx, sharingID)
 	if err != nil {
 		return err
@@ -160,12 +140,12 @@ func (s *SmartContract) ProcessTransaction(ctx contractapi.TransactionContextInt
 
 	if sharing.SharingStatus == "확정" {
 		// 임대인, 임차인 id로 지갑 불러오기
-		lenderWallet, err := s.ReadWalletByUserID(ctx, lenderIDFloat)
+		lenderWallet, err := s.ReadWalletByUserID(ctx, lenderIDInt)
 		if err != nil {
 			return err
 		}
 
-		borrowerWallet, err := s.ReadWalletByUserID(ctx, borrowerIDFloat)
+		borrowerWallet, err := s.ReadWalletByUserID(ctx, borrowerIDInt)
 		if err != nil {
 			return err
 		}
@@ -197,10 +177,10 @@ func (s *SmartContract) ProcessTransaction(ctx contractapi.TransactionContextInt
 
 // 회원가입 시 사용자 지갑 생성 - 연결 완료
 func (s *SmartContract) CreateWallet(ctx contractapi.TransactionContextInterface, userID string) error {
-	userIDFloat, err := strconv.ParseFloat(userID, 64)
+	userIDInt, err := strconv.Atoi(userID)
 
 	// userID로 만드는 walletID
-	walletID := computeUniqueID(userIDFloat)
+	walletID := computeUniqueIDInt(userIDInt)
 
 	exists, err := s.WalletExists(ctx, walletID)
 	if err != nil {
@@ -213,7 +193,7 @@ func (s *SmartContract) CreateWallet(ctx contractapi.TransactionContextInterface
 	money := 100000
 	wallet := Wallet{
 		ID:     walletID,
-		UserID: userIDFloat,
+		UserID: userIDInt,
 		Money:  money,
 	}
 
@@ -251,10 +231,10 @@ func (s *SmartContract) UpdateUserWallet(ctx contractapi.TransactionContextInter
 
 // 잔액 조회를 위한 체인코드
 func (s *SmartContract) QueryWalletBalance(ctx contractapi.TransactionContextInterface, userID string) (int, error) {
-	userIDFloat, err := strconv.ParseFloat(userID, 64)
+	userIDInt, err := strconv.Atoi(userID)
 
 	// userID로 만드는 walletID
-	walletID := computeUniqueID(userIDFloat)
+	walletID := computeUniqueIDInt(userIDInt)
 
 	// 지갑 정보 조회
 	walletAsBytes, err := ctx.GetStub().GetState(fmt.Sprintf("%.0f", walletID))
@@ -280,10 +260,10 @@ func (s *SmartContract) QueryWalletBalance(ctx contractapi.TransactionContextInt
 
 // 입출금 공통 함수
 func (s *SmartContract) performTransaction(ctx contractapi.TransactionContextInterface, userID string, amount int, isWithdraw bool) error {
-	userIDFloat, err := strconv.ParseFloat(userID, 64)
+	userIDInt, err := strconv.Atoi(userID)
 
 	// userID로 만드는 walletID
-	walletID := computeUniqueID(userIDFloat)
+	walletID := computeUniqueIDInt(userIDInt)
 
 	// 지갑 정보 조회
 	walletAsBytes, err := ctx.GetStub().GetState(fmt.Sprintf("%.0f", walletID))
@@ -402,18 +382,38 @@ func (s *SmartContract) ReadWallet(ctx contractapi.TransactionContextInterface, 
 }
 
 // userID로 조회 -> wallet
-func (s *SmartContract) ReadWalletByUserID(ctx contractapi.TransactionContextInterface, userID float64) (*Wallet, error) {
-	walletID := computeUniqueID(userID)
+func (s *SmartContract) ReadWalletByUserID(ctx contractapi.TransactionContextInterface, userID int) (*Wallet, error) {
+	walletID := computeUniqueIDInt(userID)
 
 	return s.ReadWallet(ctx, walletID)
 }
 
 // sha256으로 Unique한 ID 계산
-// sharingID는 carID로 만들고, userID는 walletID로 만듦
-func computeUniqueID(id float64) float64 {
+// sharingID는 carID로 만들고,
+func computeUniqueIDFloat(id float64) float64 {
 	// float64 타입을 바이트 슬라이스로 변환
 	idBytes := make([]byte, 8)
 	binary.LittleEndian.PutUint64(idBytes, math.Float64bits(id))
+
+	// sha256으로 Unique한 ID 계산
+	hash := sha256.New()
+	hash.Write(idBytes)
+	md := hash.Sum(nil)
+
+	// 바이트 슬라이스를 다시 float64로 변환
+	result := math.Float64frombits(binary.LittleEndian.Uint64(md))
+
+	return result
+}
+
+// userID는 walletID로 만듦
+func computeUniqueIDInt(id int) float64 {
+	// int 값을 float64로 변환
+	floatID := float64(id)
+
+	// float64 타입을 바이트 슬라이스로 변환
+	idBytes := make([]byte, 8)
+	binary.LittleEndian.PutUint64(idBytes, math.Float64bits(floatID))
 
 	// sha256으로 Unique한 ID 계산
 	hash := sha256.New()

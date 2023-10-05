@@ -1,9 +1,6 @@
 package pnu.cse.TayoTayo.TayoBE.connect;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
@@ -108,41 +105,46 @@ public class TayoConnect {
     }
 
     // 2. Owner ID로 본인 차량 조회
-    public JsonElement queryCarsByOwnerID(Long ownerID) throws GatewayException {
+    public JsonArray queryCarsByOwnerID(Long ownerID) throws GatewayException {
         var result = contract.evaluateTransaction("QueryCarByOwnerID", String.valueOf(ownerID));
         System.out.println(prettyJson(result));
-        return prettyJson(result);
+        return new Gson().fromJson(prettyJson(result), JsonArray.class);
     }
 
     // 3. Car ID로 차량 상세 조회
-    public JsonElement queryByCarID(Long carID) throws GatewayException {
+    public JsonElement queryByCarID(Double carID) throws GatewayException {
         var result = contract.evaluateTransaction("QueryCarByCarID", String.valueOf(carID));
         System.out.println(prettyJson(result));
         return prettyJson(result);
     }
 
     // 4. 차량 검색
-    public JsonElement getAvailableCars(Double leftLatitude, Double leftLongitude, Double rightLatitude, Double rightLongitude, String date) throws GatewayException, CommitException {
+    public JsonArray getAvailableCars(Double leftLatitude, Double leftLongitude, Double rightLatitude, Double rightLongitude, String date) throws GatewayException, CommitException {
         var result = contract.evaluateTransaction("GetAvailableCars",
                 leftLatitude.toString(), leftLongitude.toString(),
                 rightLatitude.toString(), rightLongitude.toString(), date);
         System.out.println(prettyJson(result));
-        return prettyJson(result);
+        return new Gson().fromJson(prettyJson(result), JsonArray.class);
     }
 
     // 5. 차량 삭제
-    public JsonElement deleteCar(Long carID) throws EndorseException, CommitException, SubmitException, CommitStatusException {
+    public JsonElement deleteCar(Double carID) throws EndorseException, CommitException, SubmitException, CommitStatusException {
         contract.submitTransaction("DeleteCar", String.valueOf(carID));
         return null;
     }
 
     // 6. 차량 수정
-    // 원래 매개변수로 아래 값들만 수정 가능하도록 구현하였는데, String으로 다 넘겨주기가 번거로워서 그냥 car 객체 만들어서 넘김
-    // timeList, sharingLocation, sharingLocationAddress, sharingLatitude, sharingLongitude, sharingAvailable, sharingRating
-    public void updateCar(Car car) throws EndorseException, CommitException, SubmitException, CommitStatusException {
-        String carJson = gson.toJson(car);
-        byte[] carAsBytes = carJson.getBytes(StandardCharsets.UTF_8);
-        contract.submitTransaction("UpdateCar", carAsBytes);
+    public void updateCar(CarRequest.modifyCarRequest request) throws EndorseException, CommitException, SubmitException, CommitStatusException {
+        CarRequest.modifyCarRequest rq = request;
+        String carID = String.valueOf(rq.getCarID());
+        String dateList = String.valueOf(rq.getDateList());
+        String sharingLatitude = String.valueOf(rq.getSharingLatitude());
+        String sharingLongitude = String.valueOf(rq.getSharingLongitude());
+        String sharingAvailable = String.valueOf(rq.isSharingAvailable());
+        String sharingPrice = String.valueOf(rq.getSharingPrice());
+        contract.submitTransaction("UpdateCar", carID, dateList,
+                rq.getSharingLocation(), rq.getSharingLocationAddress(), sharingLatitude, sharingLongitude,
+                sharingAvailable, sharingPrice);
     }
 
     /* 공유 관련 체인코드 실행

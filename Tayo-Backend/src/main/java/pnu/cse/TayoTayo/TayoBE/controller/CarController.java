@@ -45,7 +45,7 @@ public class CarController {
     // 생성후에 자동으로 vc 조회하기까지 호출하는게 가능한가??
 
     @Operation(summary = "vc 조회하기", description = "본인이 가지고 있는 VC 조회하기 API 입니다.")
-    @GetMapping("/vc")
+    @PostMapping("/getvc")
     public Response<MyVCResponse> myVC(Authentication authentication, @RequestBody MemberRequest.getMyVCRequest request) throws IndyException, ExecutionException, InterruptedException {
 
         MyVCResponse response = carService.getVC(((CustomUserDetails) authentication.getPrincipal()).getId(),

@@ -164,7 +164,7 @@ public class CarController {
         tayoConnect.createSharing(sharing);
 
         chatService.createChatRoom(((CustomUserDetails) authentication.getPrincipal()).getId(),
-                (long) request.getLenderID(), (long) request.getBorrowerID());
+                request.getLenderID(), ((CustomUserDetails) authentication.getPrincipal()).getId());
 
         return Response.success("차량 대여 신청 완료");
     }

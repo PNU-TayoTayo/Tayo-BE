@@ -17,6 +17,7 @@ import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
 import pnu.cse.TayoTayo.TayoBE.dto.response.*;
 import pnu.cse.TayoTayo.TayoBE.model.Sharing;
 import pnu.cse.TayoTayo.TayoBE.service.CarService;
+import pnu.cse.TayoTayo.TayoBE.service.ChatService;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
@@ -31,6 +32,7 @@ import java.util.concurrent.ExecutionException;
 public class CarController {
 
     private final CarService carService;
+    private final ChatService chatService;
 
 
     @Operation(summary = "VC 생성하기", description = "VC를 생성하는 API 입니다.")
@@ -120,8 +122,9 @@ public class CarController {
         // TODO : 상세조회 정보 기반으로 임차인과 임대인 사이에 채팅방 생성 + 임대인한테 알람
         /*
             필요한 거
-            - 요청하는 유저의 Id : fromMemberId
-            - 해당 {carId}의 주인 유저의 Id : toMemberId
+            - 요청하는 유저의 Id : fromMemberId(borrowerID)
+            - 해당 {carId}의 주인 유저의 Id : toMemberId(lenderID)
+
 
             1. 임차인이 임대인한테 대여 신청을 했을 때, 임대인한테 알림이 감
                 -> {임차인 nickname} 님의 대여 신청이 왔어요!
@@ -132,6 +135,9 @@ public class CarController {
         Sharing sharing = new Sharing(rq.generateSharingIDFromCarID(), rq.getCarID(), rq.getLenderID(), rq.getBorrowerID(), rq.getSharingPrice(),
                 rq.getSharingDate(), rq.getSharingLocation(), rq.getSharingStatus());
         tayoConnect.createSharing(sharing);
+
+        chatService.createChatRoom(((CustomUserDetails) authentication.getPrincipal()).getId(),
+                (long) request.getLenderID(), (long) request.getBorrowerID());
 
         return Response.success("차량 대여 신청 완료");
     }

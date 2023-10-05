@@ -8,10 +8,7 @@ import pnu.cse.TayoTayo.TayoBE.dto.response.ChatMessageResponse;
 import pnu.cse.TayoTayo.TayoBE.dto.response.ChatRoomsResponse;
 import pnu.cse.TayoTayo.TayoBE.dto.response.SendChatResponse;
 import pnu.cse.TayoTayo.TayoBE.model.ConnectState;
-import pnu.cse.TayoTayo.TayoBE.model.entity.ChatMessageEntity;
-import pnu.cse.TayoTayo.TayoBE.model.entity.ChatRoomEntity;
-import pnu.cse.TayoTayo.TayoBE.model.entity.MemberEntity;
-import pnu.cse.TayoTayo.TayoBE.model.entity.NotificationEntity;
+import pnu.cse.TayoTayo.TayoBE.model.entity.*;
 import pnu.cse.TayoTayo.TayoBE.repository.ChatRoomRepository;
 import pnu.cse.TayoTayo.TayoBE.repository.ChatMessageRespository;
 import pnu.cse.TayoTayo.TayoBE.repository.MemberRepository;
@@ -59,8 +56,19 @@ public class ChatService {
                 .build();
 
         newChatRoom.addChatMessage(newChatMessage);
-        // 4. TODO : 메시지 save (있어야 하나??)
         chatMessageRespository.save(newChatMessage);
+
+        // 알람 생성
+        NotificationEntity n = NotificationEntity.builder()
+                .fromMember(fromMember)
+                .toMember(toMember)
+                .notificationType(NotificationType.APPLY)
+                .chatRoom(newChatRoom)
+                .isRead(false)
+                .build();
+
+        notificationRepository.save(n);
+
 
     }
 

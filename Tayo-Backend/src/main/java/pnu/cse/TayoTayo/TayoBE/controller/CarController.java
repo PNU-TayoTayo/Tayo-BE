@@ -63,7 +63,7 @@ public class CarController {
     @Operation(summary = "차 등록하기", description = "차 등록하는 API 입니다.")
     @PostMapping("/create")
     public Response<RegisterCarResponse> registerCar(Authentication authentication ,
-                            @RequestPart List<MultipartFile> images,
+                                                     @RequestPart(required = false) List<MultipartFile> images,
                             @RequestPart MemberRequest.registerCarRequest request) throws Exception {
 
         RegisterCarResponse response = carService.postCar(((CustomUserDetails) authentication.getPrincipal()).getId(),

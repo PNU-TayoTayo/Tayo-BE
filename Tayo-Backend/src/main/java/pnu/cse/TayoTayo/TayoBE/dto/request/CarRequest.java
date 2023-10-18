@@ -38,4 +38,18 @@ public class CarRequest {
         private boolean sharingAvailable;
         private int sharingPrice;
     }
+
+    @Getter
+    @Setter
+    public static class modifySharingRequest{
+        private double carID;
+    }
+
+    @Getter
+    @Setter
+    public static class payRequest{
+        private double carID;
+        private Long lenderID;
+        private int sharingPrice;
+    }
 }

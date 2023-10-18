@@ -71,7 +71,7 @@ public class MemberService {
 
             // Fabric 지갑 생성
             TayoConnect tayoConnect = new TayoConnect(3);
-            tayoConnect.createWallet(newMember.getId());
+            tayoConnect.createWallet(newMember.getId(), request.getName());
 
             return Member.fromEntity(newMember);
 

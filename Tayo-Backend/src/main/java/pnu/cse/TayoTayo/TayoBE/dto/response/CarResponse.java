@@ -19,6 +19,19 @@ public class CarResponse {
     @Getter
     @Setter
     @Builder
+    public static class CarDetailWithName {
+        private CarDetail carDetail;
+        private String ownerName;
+
+        public CarDetailWithName(CarDetail carDetail, String ownerName) {
+            this.carDetail = carDetail;
+            this.ownerName = ownerName;
+        }
+    }
+
+    @Getter
+    @Setter
+    @Builder
     public static class CarDetail {
         private Double carID;
         private Long ownerID;

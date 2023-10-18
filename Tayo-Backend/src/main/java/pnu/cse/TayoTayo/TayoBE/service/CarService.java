@@ -1,7 +1,9 @@
 package pnu.cse.TayoTayo.TayoBE.service;
 
+import com.google.gson.JsonElement;
 import com.sun.xml.bind.v2.TODO;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.tuple.Pair;
 import org.hyperledger.indy.sdk.IndyException;
 import org.hyperledger.indy.sdk.anoncreds.Anoncreds;
 import org.hyperledger.indy.sdk.anoncreds.AnoncredsResults;
@@ -16,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pnu.cse.TayoTayo.TayoBE.connect.TayoConnect;
+import pnu.cse.TayoTayo.TayoBE.dto.response.CarResponse;
 import pnu.cse.TayoTayo.TayoBE.model.Car;
 import org.springframework.web.multipart.MultipartFile;
 import pnu.cse.TayoTayo.TayoBE.dto.request.MemberRequest;
@@ -275,6 +278,19 @@ public class CarService {
 
     }
 
+    @Transactional
+    public CarResponse.CarDetailWithName getDetailCar(Double carId) throws Exception {
+        TayoConnect tayoConnect = new TayoConnect(1);
+
+        JsonElement cars = tayoConnect.queryByCarID(carId);
+        CarResponse.CarDetail carDetail = CarResponse.CarDetail.fromJson(cars);
+
+        MemberEntity member = memberRepository.findOne(carDetail.getOwnerID());
+        String name = member.getName();
+
+        return new CarResponse.CarDetailWithName(carDetail, name);
+
+    }
     public double generateCarID(String referentVC) {
         byte[] memberIDBytes = referentVC.getBytes();
 

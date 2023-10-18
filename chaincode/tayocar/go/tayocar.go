@@ -44,23 +44,35 @@ type QueryResult struct {
 // ledger 초기화
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
 	cars := []Car{
-		{ID: 1, OwnerID: 1, Model: "Model1", Engine: "Engine1",
+		{ID: 1.0, OwnerID: 1, Model: "현대 아반떼", Engine: "Gasoline",
 			DeliveryDate: "2023-07-19", DrivingRecord: 250, InspectionRecord: "2021-11-20",
 			DateList:        []string{"2023-07-19", "2023-07-20"},
-			SharingLocation: "부산대학교 부산캠퍼스농구장", SharingLocationAddress: "부산 금정구 부산대학로63번길 2",
-			SharingLatitude: 12.500, SharingLongitude: 67.89, SharingAvailable: true, SharingPrice: 30000, SharingRating: 0},
+			SharingLocation: "부산대학교 파리바게트", SharingLocationAddress: "부산 금정구 장전동 419-41",
+			SharingLatitude: 35.23145507106755, SharingLongitude: 129.08500330416675, SharingAvailable: true, SharingPrice: 30000, SharingRating: 5},
 
-		{ID: 2, OwnerID: 1, Model: "Model2", Engine: "Engine2",
+		{ID: 2.0, OwnerID: 1, Model: "기아 쏘렌토", Engine: "Diesel",
 			DeliveryDate: "2023-07-19", DrivingRecord: 250, InspectionRecord: "2022-04-06",
 			DateList:        []string{"2023-07-19", "2023-07-20"},
-			SharingLocation: "부산대학교 부산캠퍼스농구장", SharingLocationAddress: "부산 금정구 부산대학로63번길 2",
-			SharingLatitude: 46.000, SharingLongitude: 88.000, SharingAvailable: true, SharingPrice: 30000, SharingRating: 0},
+			SharingLocation: "부산대학교 써브웨이", SharingLocationAddress: "부산 금정구 장전동 426",
+			SharingLatitude: 35.231365129414705, SharingLongitude: 129.08603888404323, SharingAvailable: true, SharingPrice: 23000, SharingRating: 5},
 
-		{ID: 3, OwnerID: 3, Model: "Model2", Engine: "Engine2",
+		{ID: 3.0, OwnerID: 3, Model: "아우디 A4", Engine: "Diesel",
 			DeliveryDate: "2023-07-19", DrivingRecord: 250, InspectionRecord: "2022-04-06",
 			DateList:        []string{"2023-07-19", "2023-07-20"},
-			SharingLocation: "부산대학교 부산캠퍼스농구장", SharingLocationAddress: "부산 금정구 부산대학로63번길 2",
-			SharingLatitude: 40.7128, SharingLongitude: -74.0060, SharingAvailable: true, SharingPrice: 30000, SharingRating: 0},
+			SharingLocation: "부산대학교 역앞 다이소", SharingLocationAddress: "부산 금정구 장전동 643-72",
+			SharingLatitude: 35.23546489212368, SharingLongitude: 129.07168548834894, SharingAvailable: true, SharingPrice: 24000, SharingRating: 5},
+
+		{ID: 4.0, OwnerID: 3, Model: "기아 스포티지", Engine: "Diesel",
+			DeliveryDate: "2023-07-19", DrivingRecord: 250, InspectionRecord: "2022-04-06",
+			DateList:        []string{"2023-07-19", "2023-07-20"},
+			SharingLocation: "부산대학교 톤쇼우", SharingLocationAddress: "부산 금정구 장전동 419-21",
+			SharingLatitude: 35.230413203196065, SharingLongitude: 129.0842792316448, SharingAvailable: true, SharingPrice: 40000, SharingRating: 5},
+
+		{ID: 5.0, OwnerID: 3, Model: "포르쉐 카이엔", Engine: "Diesel",
+			DeliveryDate: "2023-07-19", DrivingRecord: 250, InspectionRecord: "2022-04-06",
+			DateList:        []string{"2023-07-19", "2023-07-20"},
+			SharingLocation: "부산대학교 인문관", SharingLocationAddress: "부산 금정구 부산대학로63번길 2",
+			SharingLatitude: 35.23222258165399, SharingLongitude: 129.08125028960737, SharingAvailable: true, SharingPrice: 1200000, SharingRating: 5},
 	}
 
 	for _, car := range cars {

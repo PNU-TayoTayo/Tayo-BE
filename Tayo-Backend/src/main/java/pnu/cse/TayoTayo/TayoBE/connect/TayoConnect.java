@@ -47,9 +47,10 @@ public class TayoConnect {
         KEY_DIR_PATH = CRYPTO_PATH.resolve("users/User1@" + String.format("%s.example.com", ROLE) + "/msp/keystore");
         TLS_CERT_PATH = CRYPTO_PATH.resolve("peers/peer0." + String.format("%s.example.com", ROLE) + "/tls/ca.crt");
 
-        System.out.println("CERT_PATH: " + CERT_PATH);
-        System.out.println("KEY_DIR_PATH: " + KEY_DIR_PATH);
-        System.out.println("TLS_CERT_PATH: " + TLS_CERT_PATH);
+//        System.out.println("CERT_PATH: " + CERT_PATH);
+//        System.out.println("KEY_DIR_PATH: " + KEY_DIR_PATH);
+//        System.out.println("TLS_CERT_PATH: " + TLS_CERT_PATH);
+        System.out.println("***Fabric Grpc 연결 생성 중***");
 
         var channel = newGrpcConnection();
         var builder = Gateway.newInstance().identity(newIdentity()).signer(newSigner()).connection(channel)
@@ -60,6 +61,7 @@ public class TayoConnect {
         var gateway = builder.connect();
         var network = gateway.getNetwork(CHANNEL_NAME);
         this.contract = network.getContract(CHAINCODE_NAME);
+        System.out.println("***Fabric Grpc 연결 완료***");
     }
 
     private ManagedChannel newGrpcConnection() throws IOException, CertificateException {
@@ -90,7 +92,7 @@ public class TayoConnect {
     }
 
     /* 차량 관련 체인코드 실행
-     * 1. 차량 등록 - 테스트 완료
+     * 1. 차량 등록
      * 2. Owner ID로 본인 차량 조회
      * 3. Car ID로 차량 상세 조회
      * 4. 차량 검색
@@ -162,23 +164,23 @@ public class TayoConnect {
     }
 
     // 2. 대여 신청 정보 수정 - 공유가격, 공유시간, 공유장소명
-    public void updateSharingInfo(Long carID, Integer sharingPrice, String sharingTime, String sharingLocation) throws GatewayException, CommitException {
+    public void updateSharingInfo(Long carID, int sharingPrice, String sharingTime, String sharingLocation) throws GatewayException, CommitException {
         contract.submitTransaction("UpdateSharingInfo", String.valueOf(carID), String.valueOf(sharingPrice), sharingTime, sharingLocation);
     }
 
     // 3. 대여 신청 상태 변경
     // [신청(3)/확정(2, 결제대기)/거절(2)/이용완료(구분x 아무거나)] - 숫자는 Connect caseNumber
-//    * TODO 1: 확정이 되면 차량 정보도 수정해야 하는데, car 체인코드에 어떻게 접근하지?
-//            *  생각 중인 방법은 TayoConnect를 두 개 만들어서 2(lender, sharing)에서 확정 후
-//    *  1(lender, car)를 만들어서 해당 일자를 삭제하는 것, 어차피 공유일자로 쿼리하니까 available 필드를 바꾸진 않음
-//    * TODO 2: 지금은 정보 수정이랑 상태 변경을 묶어뒀는데 분리해야 할 듯
-    public void updateSharingStatus(Long carID, String sharingStatus) throws GatewayException, CommitException {
+//    * 확정이 되면 차량 정보도 수정해야 하는데, car 체인코드에 어떻게 접근하지?
+//      -> TayoConnect를 두 개 만들어서 2(lender, sharing)에서 확정 후
+//      -> (lender, car)를 만들어서 해당 일자를 삭제하는 것, 어차피 공유일자로 쿼리하니까 available 필드를 바꾸진 않음
+    public void updateSharingStatus(Double carID, String sharingStatus) throws GatewayException, CommitException {
         contract.submitTransaction("UpdateSharingStatus", String.valueOf(carID), sharingStatus);
     }
 
     // 4. 재화 거래 과정 (3) - 확정 상태에서만 결제 가능
-    public void processTransaction(Long carID, Long lenderID, Long borrowerID, Integer sharingPrice) throws GatewayException, CommitException {
-        contract.submitTransaction("ProcessTransaction", String.valueOf(carID), String.valueOf(lenderID), String.valueOf(borrowerID), String.valueOf(sharingPrice));
+    public void processTransaction(CarRequest.payRequest request, Long borrowerID) throws GatewayException, CommitException {
+        CarRequest.payRequest rq = request;
+        contract.submitTransaction("ProcessTransaction", String.valueOf(rq.getCarID()), String.valueOf(rq.getLenderID()), String.valueOf(borrowerID), String.valueOf(rq.getSharingPrice()));
     }
 
     /* 지갑 관련 체인코드 실행
@@ -190,8 +192,9 @@ public class TayoConnect {
      * */
 
     // 1. 회원가입 시 지갑 생성(3)
-    public void createWallet(Long userID) throws GatewayException, CommitException {
+    public void createWallet(Long userID, String name) throws GatewayException, CommitException {
         contract.submitTransaction("CreateWallet", String.valueOf(userID));
+        System.out.println("===" + name + "(id:" + userID.toString() + ")님의 Fabric 지갑 생성 완료===");
     }
 
     // 2. 잔액 조회
@@ -201,7 +204,7 @@ public class TayoConnect {
         String resultString = new String(resultBytes);
         // 문자열을 정수로 변환
         Integer balance = Integer.parseInt(resultString);
-        System.out.println(balance);
+        System.out.println("잔액 조회 : " + balance);
 
         return balance;
     }
@@ -209,12 +212,14 @@ public class TayoConnect {
     // 3. 출금
     public void withdraw(Long userID, Integer amount) throws GatewayException, CommitException {
         contract.submitTransaction("Withdraw", String.valueOf(userID), String.valueOf(amount));
+        System.out.println(amount + "원 출금 완료");
         System.out.println("출금 후 잔액 : " + queryWalletBalance(userID));
     }
 
     // 4. 입금
     public void deposit(Long userID, Integer amount) throws GatewayException, CommitException {
         contract.submitTransaction("Deposit", String.valueOf(userID), String.valueOf(amount));
+        System.out.println(amount + "원 입금 완료");
         System.out.println("입금 후 잔액 : " + queryWalletBalance(userID));
     }
 

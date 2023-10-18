@@ -65,7 +65,7 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 	return nil
 }
 
-// 사용자가 대여 신청 누르면 발생 -> Sharing 객체를 만들어줌 - 연결 완료
+// 사용자가 대여 신청 누르면 발생 -> Sharing 객체를 만들어줌
 func (s *SmartContract) CreateSharing(ctx contractapi.TransactionContextInterface, sharing Sharing) error {
 	sharingAsBytes, err := json.Marshal(sharing)
 	if err != nil {
@@ -74,51 +74,52 @@ func (s *SmartContract) CreateSharing(ctx contractapi.TransactionContextInterfac
 	return ctx.GetStub().PutState(fmt.Sprintf("%.0f", sharing.ID), sharingAsBytes)
 }
 
-// sharing 구조체 업데이트 함수
-func (s *SmartContract) UpdateSharing(ctx contractapi.TransactionContextInterface, carID string, sharingStatus string, sharingPrice string, sharingDate string, sharingLocation string) error {
+// sharing status 업데이트 함수
+func (s *SmartContract) UpdateSharingStatus(ctx contractapi.TransactionContextInterface, carID string, sharingStatus string) error {
+	// CarID를 float64로 변환
 	carIDFloat, err := strconv.ParseFloat(carID, 64)
-	sharingPriceInt, err := strconv.Atoi(sharingPrice)
-
-	sharingID := computeUniqueIDFloat(carIDFloat)
-
-	sharingAsBytes, err := ctx.GetStub().GetState(fmt.Sprintf("%.0f", sharingID))
 	if err != nil {
-		return fmt.Errorf("failed to read from world state: %v", err)
-	}
-	if sharingAsBytes == nil {
-		return fmt.Errorf("the sharing %s does not exist", sharingID)
+		return fmt.Errorf("failed to parse carID: %v", err)
 	}
 
-	// 기존 sharing 구조체 업데이트
-	sharing := new(Sharing)
-	err = json.Unmarshal(sharingAsBytes, sharing)
+	// world state에서 Sharing 객체 읽고,
+	resultsIterator, err := ctx.GetStub().GetQueryResult(fmt.Sprintf(`{"selector": {"carID": %.0f}}`, carIDFloat))
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal sharing data: %v", err)
+		return fmt.Errorf("failed to query world state: %v", err)
+	}
+	defer resultsIterator.Close()
+
+	// Sharing 객체 존재하는지 확인
+	if !resultsIterator.HasNext() {
+		return fmt.Errorf("the sharing with carID %.0f does not exist", carIDFloat)
 	}
 
-	// 업데이트할 필드만 값 변경
-	if sharingStatus != "" {
+	// QueryResultsIterator에서 결과 읽어서
+	for resultsIterator.HasNext() {
+		queryResponse, err := resultsIterator.Next()
+		if err != nil {
+			return fmt.Errorf("failed to read query result: %v", err)
+		}
+
+		// Sharing 객체 불러오기
+		sharing := new(Sharing)
+		err = json.Unmarshal(queryResponse.Value, sharing)
+		if err != nil {
+			return fmt.Errorf("failed to unmarshal sharing data: %v", err)
+		}
+
+		// SharingStatus 업데이트
 		sharing.SharingStatus = sharingStatus
-	}
-	if sharingPriceInt >= 0 {
-		sharing.SharingPrice = sharingPriceInt
-	}
-	if sharingDate != "" {
-		sharing.SharingDate = sharingDate
-	}
-	if sharingLocation != "" {
-		sharing.SharingLocation = sharingLocation
-	}
 
-	sharingAsBytes, err = json.Marshal(sharing)
-	if err != nil {
-		return fmt.Errorf("failed to marshal sharing data: %v", err)
-	}
-
-	// 업데이트된 sharing 정보를 월드 스테이트에 저장
-	err = ctx.GetStub().PutState(fmt.Sprintf("%.0f", sharingID), sharingAsBytes)
-	if err != nil {
-		return fmt.Errorf("failed to put sharing data on ledger: %v", err)
+		// 업데이트된 sharing 정보를 world state에 저장
+		sharingAsBytes, err := json.Marshal(sharing)
+		if err != nil {
+			return fmt.Errorf("failed to marshal sharing data: %v", err)
+		}
+		err = ctx.GetStub().PutState(queryResponse.Key, sharingAsBytes)
+		if err != nil {
+			return fmt.Errorf("failed to put sharing data on ledger: %v", err)
+		}
 	}
 
 	return nil
@@ -127,8 +128,6 @@ func (s *SmartContract) UpdateSharing(ctx contractapi.TransactionContextInterfac
 // 재화 거래 과정
 func (s *SmartContract) ProcessTransaction(ctx contractapi.TransactionContextInterface, carID string, lenderID string, borrowerID string, sharingPrice string) error {
 	carIDFloat, err := strconv.ParseFloat(carID, 64)
-	lenderIDInt, err := strconv.Atoi(lenderID)
-	borrowerIDInt, err := strconv.Atoi(borrowerID)
 	sharingPriceInt, err := strconv.Atoi(sharingPrice)
 
 	// carID를 sharingID로 변환
@@ -139,33 +138,18 @@ func (s *SmartContract) ProcessTransaction(ctx contractapi.TransactionContextInt
 	}
 
 	if sharing.SharingStatus == "확정" {
-		// 임대인, 임차인 id로 지갑 불러오기
-		lenderWallet, err := s.ReadWalletByUserID(ctx, lenderIDInt)
+		// lenderID로 sharingPriceInt만큼 입금
+		err = s.Deposit(ctx, lenderID, strconv.Itoa(sharingPriceInt))
 		if err != nil {
-			return err
+			return fmt.Errorf("lenderID 입금 중 오류 발생: %v", err)
 		}
 
-		borrowerWallet, err := s.ReadWalletByUserID(ctx, borrowerIDInt)
+		// borrowerID로 sharingPriceInt만큼 출금
+		err = s.Withdraw(ctx, borrowerID, strconv.Itoa(sharingPriceInt))
 		if err != nil {
-			return err
-		}
-
-		// 재화 설정
-		lenderWallet.Money -= sharingPriceInt
-		borrowerWallet.Money += sharingPriceInt
-
-		// 지갑 업데이트
-		err = s.UpdateUserWallet(ctx, lenderWallet)
-		if err != nil {
-			return err
-		}
-
-		err = s.UpdateUserWallet(ctx, borrowerWallet)
-		if err != nil {
-			return err
+			return fmt.Errorf("borrowerID 출금 중 오류 발생: %v", err)
 		}
 	}
-
 	return nil
 }
 
@@ -175,7 +159,7 @@ func (s *SmartContract) ProcessTransaction(ctx contractapi.TransactionContextInt
 // ----------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------
 
-// 회원가입 시 사용자 지갑 생성 - 연결 완료
+// 회원가입 시 사용자 지갑 생성
 func (s *SmartContract) CreateWallet(ctx contractapi.TransactionContextInterface, userID string) error {
 	userIDInt, err := strconv.Atoi(userID)
 
@@ -389,7 +373,7 @@ func (s *SmartContract) ReadWalletByUserID(ctx contractapi.TransactionContextInt
 }
 
 // sha256으로 Unique한 ID 계산
-// sharingID는 carID로 만들고,
+// carID -> sharingID
 func computeUniqueIDFloat(id float64) float64 {
 	// float64 타입을 바이트 슬라이스로 변환
 	idBytes := make([]byte, 8)
@@ -406,7 +390,7 @@ func computeUniqueIDFloat(id float64) float64 {
 	return result
 }
 
-// userID는 walletID로 만듦
+// userID -> walletID 변환
 func computeUniqueIDInt(id int) float64 {
 	// int 값을 float64로 변환
 	floatID := float64(id)

@@ -214,11 +214,11 @@ public class CarService {
                     System.out.println(sd);
                 }
 
-                List<String> urls = s3Uploader.uploadFile(images);
-                System.out.println("[차량 이미지 url]");
-                for (String url : urls) {
-                    System.out.println(url);
-                }
+//                List<String> urls = s3Uploader.uploadFile(images);
+//                System.out.println("[차량 이미지 url]");
+//                for (String url : urls) {
+//                    System.out.println(url);
+//                }
 
                 // vp 데이터 뽑기
                 String proofJson = vp.get("proofJson");

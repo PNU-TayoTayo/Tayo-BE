@@ -11,7 +11,6 @@ import org.hyperledger.indy.sdk.anoncreds.CredentialsSearchForProofReq;
 import org.hyperledger.indy.sdk.did.Did;
 import org.hyperledger.indy.sdk.ledger.LedgerResults;
 import org.hyperledger.indy.sdk.wallet.Wallet;
-import org.joda.time.DateTime;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,7 +49,7 @@ public class CarService {
 
     private final PoolAndWalletManager poolAndWalletManager;
 
-    private final S3Uploader s3Uploader;
+    //private final S3Uploader s3Uploader;
 
     @Value("${VCService.issuer.DID}")
     private String issuerDID;

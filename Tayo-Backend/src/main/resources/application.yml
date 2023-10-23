@@ -14,25 +14,32 @@ springdoc:
       disabled: true
 
 
-
 spring:
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${MYSQL_URL}
-    username: ${MYSQL_ID}
-    password: ${MYSQL_PASSWORD}
+    url: jdbc:h2:mem:testdb;MODE=MySQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    url: ${MYSQL_URL}
+#    username: ${MYSQL_ID}
+#    password: ${MYSQL_PASSWORD}
+  h2:
+    console:
+      enabled: true
   servlet:
     multipart:
       max-file-size: 10MB # 파일 하나 당 최대 사이즈
       max-request-size: 20MB # 요청 당 최대 사이즈
+  jpa:
+#    database: mysql
+#    hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
+    hibernate.ddl-auto: create
+    #hibernate.ddl-auto: update
+    hibernate.format_sql: true
+    hibernate.show-sql: true
+    default_batch_fetch_size: 100
 
-spring.jpa:
-  database: mysql
-  hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
-  hibernate.ddl-auto: create
-  #hibernate.ddl-auto: update
-  hibernate.format_sql: true
-  hibernate.show-sql: true
 
 #cloud:
 #  aws:
